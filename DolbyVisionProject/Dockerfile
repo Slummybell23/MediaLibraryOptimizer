@@ -33,7 +33,8 @@ WORKDIR /app
 COPY --from=publish /app/publish .
 
 # Environment variables
-ENV LIBRARY_PATH=/data
+ENV TVSHOW_FOLDER=/tvShows
+ENV MOVIE_FOLDER=/movies
 ENV CONFIG_PATH=/config
 ENV CHECK_ALL=N
 ENV ENCODE=N

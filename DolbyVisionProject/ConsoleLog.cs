@@ -15,10 +15,14 @@ public class ConsoleLog
         {
             ConfigDir = "/config";
         }
+        else
+        {
+            throw new NotSupportedException("Unsupported operating system.");
+        }
     }
     
     public StringBuilder LogText { get; set; } = new StringBuilder();
-    private string ConfigDir = string.Empty;
+    private string ConfigDir;
     
     public void WriteLine(string inputText)
     {
