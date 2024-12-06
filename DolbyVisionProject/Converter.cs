@@ -107,7 +107,6 @@ public class Converter(ConsoleLog console)
             injectRpu = $"dovi_tool inject-rpu -i \"{encodedHevc}\" -r \"{rpuFile}\" -o \"{encodedProfile8HevcFile}\"\n";
         }
         
-        
         string remuxCommand;
         if (needsEncoding) 
             remuxCommand = $"mkvmerge -o \"{outputFile}\" -D \"{filePath}\" \"{encodedProfile8HevcFile}\"";

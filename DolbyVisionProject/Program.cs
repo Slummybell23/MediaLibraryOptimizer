@@ -20,7 +20,7 @@ public abstract class Program
         {
             checkAll = "y";
             movieFolder = "Z:\\Plex\\Movie";
-            movieFolder = "Z:\\Plex\\Movie\\Coraline (2009)";
+            //movieFolder = "Z:\\Plex\\Movie\\Coraline (2009)";
             tvShowFolder = "Z:\\Plex\\TvShow";
         }
         else
@@ -33,8 +33,12 @@ public abstract class Program
         while (true)
         {
             var now = DateTime.Now;
-            var hoursTill5 = Math.Abs(startHour - now.Hour);
 
+            var hoursDifference = (startHour + 24) - now.Hour;
+            if (hoursDifference > 24)
+                hoursDifference -= 24;
+
+            var hoursTill5 = hoursDifference;
             if (hoursTill5 == 0)
             {
                 var nonDolbyVision7 = 0;
@@ -99,8 +103,11 @@ public abstract class Program
                 consoleLog.WriteLine("Waiting for new files... Setting to recent files");
                 
                 now = DateTime.Now;
-                hoursTill5 = Math.Abs(startHour - now.Hour);
-                consoleLog.WriteLine($"Waiting until 5...\n{hoursTill5} hours remaining from time of log.");
+                hoursDifference = (startHour + 24) - now.Hour;
+                if (hoursDifference > 24)
+                   hoursDifference -= 24;
+
+                hoursTill5 = hoursDifference;
                 Thread.Sleep(TimeSpan.FromHours(hoursTill5));
             }
             else
