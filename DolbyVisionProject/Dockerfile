@@ -38,6 +38,7 @@ ENV MOVIE_FOLDER=/movies
 ENV CONFIG_PATH=/config
 ENV CHECK_ALL=N
 ENV ENCODE=N
+ENV STARTTIME=5
 
 # Run the app
 ENTRYPOINT ["dotnet", "DolbyVisionProject.dll"]
