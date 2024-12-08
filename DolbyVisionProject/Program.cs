@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 
 namespace DolbyVisionProject;
@@ -9,32 +10,39 @@ public abstract class Program
     {
         var consoleLog = new ConsoleLog();
         var converter = new Converter(consoleLog);
-        var startHour = 5;
         
         string movieFolder;
         string tvShowFolder;
-        
         string checkAll;
+        var startHour = DateTime.Now.Hour;
+
         
         if (Debugger.IsAttached)
         {
-            checkAll = "y";
+            checkAll = "n";
             movieFolder = "Z:\\Plex\\Movie";
-            movieFolder = "Z:\\Plex\\Movie\\Coraline (2009)";
-            tvShowFolder = "Z:\\Plex\\TvShow";
+            //movieFolder = "Z:\\Plex\\Movie\\Coraline (2009)";
+            tvShowFolder = "Z:\\Plex\\TV show";
         }
         else
         {
             movieFolder = Environment.GetEnvironmentVariable("MOVIE_FOLDER")!;
             tvShowFolder = Environment.GetEnvironmentVariable("TVSHOW_FOLDER")!;
             checkAll = Environment.GetEnvironmentVariable("CHECK_ALL")!;
+
+            string startTimeStr = Environment.GetEnvironmentVariable("STARTTIME")!;
+            var isParsed = int.TryParse(startTimeStr, CultureInfo.InvariantCulture, out startHour);
         }
         
         while (true)
         {
             var now = DateTime.Now;
-            var hoursTill5 = Math.Abs(startHour - now.Hour);
 
+            var hoursDifference = (startHour + 24) - now.Hour;
+            if (hoursDifference >= 24)
+                hoursDifference -= 24;
+
+            var hoursTill5 = hoursDifference;
             if (hoursTill5 == 0)
             {
                 var nonDolbyVision7 = 0;
@@ -99,13 +107,16 @@ public abstract class Program
                 consoleLog.WriteLine("Waiting for new files... Setting to recent files");
                 
                 now = DateTime.Now;
-                hoursTill5 = Math.Abs(startHour - now.Hour);
-                consoleLog.WriteLine($"Waiting until 5...\n{hoursTill5} hours remaining from time of log.");
+                hoursDifference = (startHour + 24) - now.Hour;
+                if (hoursDifference > 24)
+                   hoursDifference -= 24;
+
+                hoursTill5 = hoursDifference;
                 Thread.Sleep(TimeSpan.FromHours(hoursTill5));
             }
             else
             {
-                consoleLog.WriteLine($"Waiting until 5...\n{hoursTill5} hours remaining from time of log.");
+                consoleLog.WriteLine($"Waiting until {startHour}...\n{hoursTill5} hours remaining from time of log.");
                 Thread.Sleep(TimeSpan.FromHours(hoursTill5));
             }
         }
