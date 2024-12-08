@@ -5,8 +5,10 @@ namespace DolbyVisionProject;
 
 public class ConsoleLog
 {
+    //ConsoleLog meant to be used instead of Console since it's WriteLine method also adds to log file.
     public ConsoleLog()
     {
+        //File systems differ between windows and linux dockerized
         if (OperatingSystem.IsWindows())
         {
             ConfigDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
@@ -21,15 +23,20 @@ public class ConsoleLog
         }
     }
     
+    //Allows for better string formatting
     public StringBuilder LogText { get; set; } = new StringBuilder();
+    
+    //Determines where to put log files
     private string ConfigDir;
     
+    //Prints to the console and adds to the LogText object for logging purposes.
     public void WriteLine(string inputText)
     {
         LogText.AppendLine(inputText);
         Console.WriteLine(inputText);
     }
 
+    //Generates a log file in a movies respective name and folder containing info from WriteLine().
     public void LogFile(string file)
     {
         var formatedDate = DateTime.Today.ToString("MM-dd-yyyy");
@@ -41,6 +48,7 @@ public class ConsoleLog
         
         var logFile = Path.Combine(logFolder, $"{movie}.txt");
         
+        //Overrides file if already existing.
         if (File.Exists(logFile))
             File.Delete(logFile);
         
