@@ -6,4 +6,8 @@ Environment Vars:<br>
     retaining as much quality as possible. **Warning** if enabled, reencoding will dramatically increase the conversion time of a file. TODO: Add support for nvidia devices.<br>
 
 
+    Docker Image (Intended run environment)
+    https://hub.docker.com/repository/docker/slummybell/dolbyvisionconverter/general
+
+
   
