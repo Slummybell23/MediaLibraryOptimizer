@@ -8,6 +8,7 @@ public abstract class Program
 {
     private static void Main(string[] args)
     {
+        //Creates objects necessary for logging and converting files.
         var consoleLog = new ConsoleLog();
         var converter = new Converter(consoleLog);
         
@@ -15,10 +16,10 @@ public abstract class Program
         string tvShowFolder;
         string checkAll;
         var startHour = DateTime.Now.Hour;
-
         
         if (Debugger.IsAttached)
         {
+            //These are file paths specified to my Windows machine for debugging.
             checkAll = "n";
             movieFolder = "Z:\\Plex\\Movie";
             //movieFolder = "Z:\\Plex\\Movie\\Coraline (2009)";
@@ -26,6 +27,7 @@ public abstract class Program
         }
         else
         {
+            //Assumes if not in debug mode, running in docker environment.
             movieFolder = Environment.GetEnvironmentVariable("MOVIE_FOLDER")!;
             tvShowFolder = Environment.GetEnvironmentVariable("TVSHOW_FOLDER")!;
             checkAll = Environment.GetEnvironmentVariable("CHECK_ALL")!;
@@ -38,17 +40,19 @@ public abstract class Program
         {
             var now = DateTime.Now;
 
+            //Calculates hours until start hour user specified.
             var hoursDifference = (startHour + 24) - now.Hour;
             if (hoursDifference >= 24)
                 hoursDifference -= 24;
 
-            var hoursTill5 = hoursDifference;
-            if (hoursTill5 == 0)
+            var hoursTillStart = hoursDifference;
+            if (hoursTillStart == 0)
             {
                 var nonDolbyVision7 = 0;
                 var failedFiles = new List<string>();
                 var convertedFiles = new List<string>();
 
+                //Grabs all files needed to check and iterate through them.
                 var directory = converter.BuildFilesList(movieFolder, tvShowFolder, checkAll);
                 consoleLog.WriteLine($"Processing {directory.Count} files...");
                 foreach (var file in directory)
@@ -56,11 +60,15 @@ public abstract class Program
                     consoleLog.LogText = new StringBuilder();
                     consoleLog.WriteLine($"Processing file: {file}");
 
+                    //Check if file is Dolby Vision Profile 7.
                     if (converter.IsProfile7(file))
                     {
                         consoleLog.WriteLine($"Dolby Vision Profile 7 detected in: {file}");
 
+                        //Start timer to calculate time to convert file
                         var start = DateTime.Now;
+                        
+                        //Convert file to Dolby Vision 8 and reencode file if user requested.
                         var converted = converter.ConvertFile(file);
 
                         if (converted)
@@ -81,6 +89,7 @@ public abstract class Program
                     }
                 }
 
+                //Build out quick view log of full run.
                 var endRunOutput = new StringBuilder();
                 endRunOutput.AppendLine($"{directory.Count} files processed");
                 endRunOutput.AppendLine($"{nonDolbyVision7} files skipped");
@@ -106,18 +115,19 @@ public abstract class Program
                 checkAll = "n";
                 consoleLog.WriteLine("Waiting for new files... Setting to recent files");
                 
+                //Setup to wait until start time.
                 now = DateTime.Now;
                 hoursDifference = (startHour + 24) - now.Hour;
                 if (hoursDifference > 24)
                    hoursDifference -= 24;
 
-                hoursTill5 = hoursDifference;
-                Thread.Sleep(TimeSpan.FromHours(hoursTill5));
+                hoursTillStart = hoursDifference;
+                Thread.Sleep(TimeSpan.FromHours(hoursTillStart));
             }
             else
             {
-                consoleLog.WriteLine($"Waiting until {startHour}...\n{hoursTill5} hours remaining from time of log.");
-                Thread.Sleep(TimeSpan.FromHours(hoursTill5));
+                consoleLog.WriteLine($"Waiting until {startHour}...\n{hoursTillStart} hours remaining from time of log.");
+                Thread.Sleep(TimeSpan.FromHours(hoursTillStart));
             }
         }
     }

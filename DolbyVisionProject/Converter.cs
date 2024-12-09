@@ -218,53 +218,35 @@ public class Converter(ConsoleLog console)
         }
     }
 
-    private string RunCommandAsBatch(string command, string file)
+    private string RunCommandAsPowershell(string command, string file)
     {
-        var tempBatFile = Path.Combine(Path.GetTempPath(), "temp_command.bat");
-            
-        if (File.Exists(tempBatFile))
-            File.Delete(tempBatFile);
-            
-        File.WriteAllText(tempBatFile, command);
-
-        if (!File.Exists(tempBatFile))
-            throw new Exception($"Batch file not found: {tempBatFile}");
-
-        console.WriteLine($"Batch file contents:\n{File.ReadAllText(tempBatFile)}");
-
-        var processInfo = new ProcessStartInfo
-        {
-            FileName = tempBatFile,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        var output = RunProccess(file, processInfo, tempBatFile);
-        return output;
-    }
-
-    private string RunCommandAsShellScript(string command, string file)
-    {
-        var tempShFile = Path.Combine("/tmp", "temp_command.sh");
-        
-        if (File.Exists(tempShFile))
-            File.Delete(tempShFile);
-        
-        File.WriteAllText(tempShFile, $"#!/bin/bash\n{command}");
-        
-        if (!File.Exists(tempShFile))
-            throw new Exception($"Batch file not found: {tempShFile}");
-
-        console.WriteLine($"Batch file contents:\n{File.ReadAllText(tempShFile)}");
-        
-        var chmodProcess = new Process
+        //Specifies starting arguments for running powershell script
+        var process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = "/bin/chmod",
-                Arguments = $"+x {tempShFile}",
+                FileName = "powershell.exe",
+                Arguments = $"-Command \"{command}\"",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            }
+        };
+        
+        var output = RunProccess(file, process);
+        return output;
+    }
+
+    private string RunCommandAsBash(string command, string file)
+    {
+        //Specifies starting arguments for running bash script
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "/bin/bash",
+                Arguments = $"-c \"{command}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -272,101 +254,75 @@ public class Converter(ConsoleLog console)
             }
         };
 
-        chmodProcess.Start();
-        chmodProcess.WaitForExit();
-
-        var processInfo = new ProcessStartInfo
-        {
-            FileName = "/bin/bash",
-            Arguments = tempShFile,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        var output = RunProccess(file, processInfo, tempShFile);
+        var output = RunProccess(file, process);
         return output;
     }
 
-    private string RunProccess(string file, ProcessStartInfo processInfo, string tempFile)
+    private string RunProccess(string file, Process process)
     {
-        using var process = new Process();
-        process.StartInfo = processInfo;
-        try
+        process.Start();
+        
+        //Generates 2 threaded tasks to monitor the output stream of the script file.
+        
+        //Monitors non erroring output.
+        var outputText = "";
+        var outputTask = Task.Run(() =>
         {
-            process.Start();
-
-            
-            //Generates 2 threaded tasks to monitor the output stream of the script file.
-            
-            //Monitors non erroring output.
-            var outputText = "";
-            var outputTask = Task.Run(() =>
+            string line;
+            while ((line = process.StandardOutput.ReadLine()!) != null)
             {
-                string line;
-                while ((line = process.StandardOutput.ReadLine()) != null)
+                //Ignores specific outputs
+                //Allowed outputs get logged to a logFile in the console object.
+                if (!line.Contains("Last message repeated") 
+                    && !line.Contains("Skipping NAL unit")
+                    && !line.Contains("q=-1.0 size="))
                 {
-                    //Ignores specific outputs
-                    //Allowed outputs get logged to a logFile in the console object.
-                    if (!line.Contains("Last message repeated") 
-                        && !line.Contains("Skipping NAL unit")
-                        && !line.Contains("q=-1.0 size="))
-                    {
-                        outputText += line;
-                        console.WriteLine($"{line} | File: {file}");
-                    }
+                    outputText += line;
+                    console.WriteLine($"{line} | File: {file}");
                 }
-            });
-
-            
-            //Monitors error output.
-            var errorText = "";
-            var errorTask = Task.Run(() =>
-            {
-                string line;
-                while ((line = process.StandardError.ReadLine()!) != null)
-                {
-                    //Ignores specific outputs
-                    //Allowed outputs get logged to a logFile in the console object.
-                    if (!line.Contains("Last message repeated") 
-                        && !line.Contains("Skipping NAL unit")
-                        && !line.Contains("q=-1.0 size="))
-                    {
-                        errorText += line;
-                        console.WriteLine($"{line} | File: {file}");
-                    }
-                }
-            });
-
-            //Does not execute next lines until script finishes running.
-            process.WaitForExit();
-            
-            //Waits for the output and error monitors to end.
-            Task.WaitAll(outputTask, errorTask);
-                
-            var combinedOutput = outputText + errorText;
-
-            //Ignores FFmpeg warning.
-            if (errorText.Contains("At least one output file must be specified"))
-            {
-                console.WriteLine("Warning: FFmpeg returned a minor error (ignored):");
-                console.WriteLine(errorText);
             }
-            else if (process.ExitCode != 0)
-            {
-                throw new Exception($"Command failed with exit code {process.ExitCode}: {errorText}");
-            }
-
-            console.WriteLine("Process completed successfully.");
-            return combinedOutput;
-        }
-        finally
+        });
+        
+        //Monitors error output.
+        var errorText = "";
+        var errorTask = Task.Run(() =>
         {
-            //Deletes executable script file.
-            if (File.Exists(tempFile))
-                File.Delete(tempFile);
+            string line;
+            while ((line = process.StandardError.ReadLine()!) != null)
+            {
+                //Ignores specific outputs
+                //Allowed outputs get logged to a logFile in the console object.
+                if (!line.Contains("Last message repeated") 
+                    && !line.Contains("Skipping NAL unit")
+                    && !line.Contains("q=-1.0 size="))
+                {
+                    errorText += line;
+                    console.WriteLine($"{line} | File: {file}");
+                }
+            }
+        });
+
+        //Does not execute next lines until script finishes running.
+        process.WaitForExit();
+        
+        //Waits for the output and error monitors to end.
+        Task.WaitAll(outputTask, errorTask);
+            
+        var combinedOutput = outputText + errorText;
+
+        //Ignores FFmpeg warning.
+        if (errorText.Contains("At least one output file must be specified"))
+        {
+            console.WriteLine("Warning: FFmpeg returned a minor error (ignored):");
+            console.WriteLine(errorText);
         }
+        else if (process.ExitCode != 0)
+        {
+            throw new Exception($"Command failed with exit code {process.ExitCode}: {errorText}");
+        }
+
+        console.WriteLine("Process completed successfully.");
+        return combinedOutput;
     }
 
     private string RunCommand(string command, string file)
@@ -375,11 +331,11 @@ public class Converter(ConsoleLog console)
         //(Although preferably in a linux based docker container)
         if (OperatingSystem.IsWindows())
         {
-            return RunCommandAsBatch(command, file);
+            return RunCommandAsPowershell(command, file);
         }
         else if (OperatingSystem.IsLinux())
         {
-            return RunCommandAsShellScript(command, file);
+            return RunCommandAsBash(command, file);
         }
         else
         {
