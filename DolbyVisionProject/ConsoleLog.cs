@@ -11,11 +11,11 @@ public class ConsoleLog
         //File systems differ between windows and linux dockerized
         if (OperatingSystem.IsWindows())
         {
-            ConfigDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
+            _configDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
         }
         else if (OperatingSystem.IsLinux())
         {
-            ConfigDir = "/config";
+            _configDir = "/config";
         }
         else
         {
@@ -27,7 +27,7 @@ public class ConsoleLog
     public StringBuilder LogText { get; set; } = new StringBuilder();
     
     //Determines where to put log files
-    private string ConfigDir;
+    private string _configDir;
     
     //Prints to the console and adds to the LogText object for logging purposes.
     public void WriteLine(string inputText)
@@ -40,7 +40,7 @@ public class ConsoleLog
     public void LogFile(string file)
     {
         var formatedDate = DateTime.Today.ToString("MM-dd-yyyy");
-        var logFolder = Path.Combine(ConfigDir, "logs", formatedDate, "movies");
+        var logFolder = Path.Combine(_configDir, "logs", formatedDate, "movies");
         
         Directory.CreateDirectory(logFolder);
 

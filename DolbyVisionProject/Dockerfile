@@ -6,7 +6,11 @@ WORKDIR /app
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
-    wget tar ffmpeg mkvtoolnix && \
+    wget tar ffmpeg mkvtoolnix apt-transport-https software-properties-common && \
+    # Add Microsoft repository for PowerShell
+    wget -q https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb && \
+    dpkg -i packages-microsoft-prod.deb && \
+    apt-get update && apt-get install -y powershell && \
     wget https://github.com/quietvoid/dovi_tool/releases/download/2.1.2/dovi_tool-2.1.2-x86_64-unknown-linux-musl.tar.gz && \
     tar -xvf dovi_tool-2.1.2-x86_64-unknown-linux-musl.tar.gz && \
     mv dovi_tool /usr/local/bin/dovi_tool && \

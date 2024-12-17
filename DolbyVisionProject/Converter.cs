@@ -106,7 +106,7 @@ public class Converter
     {
         //Grabs file info.
         //Note: hide_banner hides program banner for easier readability and removing unnecessary text
-        var command = $"ffmpeg -i \"{filePath}\" -hide_banner -loglevel info";
+        var command = $"ffmpeg -i '{filePath}' -hide_banner -loglevel info";
 
         try
         {
@@ -142,15 +142,14 @@ public class Converter
         }
     }
 
-    private string RunCommandAsPowershell(string command, string file)
+    private string RunCommandInWindows(string command, string file)
     {
-        command = command.Replace($"\"", $"'");
         //Specifies starting arguments for running powershell script
         var process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = "powershell.exe",
+                FileName = "pwsh.exe",
                 Arguments = $"-Command \"{command}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -163,16 +162,15 @@ public class Converter
         return output;
     }
 
-    private string RunCommandAsBash(string command, string file)
+    private string RunCommandInDocker(string command, string file)
     {
-        command = command.Replace($"\"", $"'");
         //Specifies starting arguments for running bash script
         var process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = "/bin/bash",
-                Arguments = $"-c \"{command}\"",
+                FileName = "pwsh",
+                Arguments = $"-Command \"{command}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -255,11 +253,11 @@ public class Converter
         //(Although preferably in a linux based docker container)
         if (OperatingSystem.IsWindows())
         {
-            return RunCommandAsPowershell(command, file);
+            return RunCommandInWindows(command, file);
         }
         else if (OperatingSystem.IsLinux())
         {
-            return RunCommandAsBash(command, file);
+            return RunCommandInDocker(command, file);
         }
         else
         {

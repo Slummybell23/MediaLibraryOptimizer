@@ -39,17 +39,17 @@ public class DolbyVisionWrapper
                 _consoleLog.WriteLine($"Processing {directory.Count} files...");
                 foreach (var file in directory)
                 {
-                    if (file.Contains("WALL"))
-                    {
-                        
-                    }
+                    //var modifiedFile = file.Replace("(", "`(");
+                    var modifiedFile = file.Replace("'", "''");
+                    //modifiedFile = modifiedFile.Replace(")", "`)");
+                    
                     _consoleLog.LogText = new StringBuilder();
-                    _consoleLog.WriteLine($"Processing file: {file}");
+                    _consoleLog.WriteLine($"Processing file: {modifiedFile}");
 
                     //Check if file is Dolby Vision Profile 7.
-                    if (_converter.IsProfile7(file))
+                    if (_converter.IsProfile7(modifiedFile))
                     {
-                        _consoleLog.WriteLine($"Dolby Vision Profile 7 detected in: {file}");
+                        _consoleLog.WriteLine($"Dolby Vision Profile 7 detected in: {modifiedFile}");
 
                         //Start timer to calculate time to convert file
                         var start = DateTime.Now;
@@ -57,9 +57,9 @@ public class DolbyVisionWrapper
                         //Convert file to Dolby Vision 8 and reencode file if user requested.
                         var converted = false;
                         if (Remux && Encode)
-                            converted = _converter.RemuxAndEncode(file);
+                            converted = _converter.RemuxAndEncode(modifiedFile);
                         else if (Remux)
-                            converted = _converter.Remux(file);
+                            converted = _converter.Remux(modifiedFile);
 
                         if (converted)
                             convertedFiles.Add(file);
@@ -70,11 +70,11 @@ public class DolbyVisionWrapper
                         var timeCost = end - start;
                         _consoleLog.WriteLine($"Conversion Time: {timeCost.ToString()}");
 
-                        _consoleLog.LogFile(file);
+                        _consoleLog.LogFile(modifiedFile);
                     }
                     else
                     {
-                        _consoleLog.WriteLine($"Skipping: {file} (not Dolby Vision Profile 7)");
+                        _consoleLog.WriteLine($"Skipping: {modifiedFile} (not Dolby Vision Profile 7)");
                         nonDolbyVision7++;
                     }
                 }
