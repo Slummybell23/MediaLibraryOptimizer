@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Text;
 
-namespace DolbyVisionProject;
+namespace LibraryOptimizer;
 
 public class ConsoleLog
 {

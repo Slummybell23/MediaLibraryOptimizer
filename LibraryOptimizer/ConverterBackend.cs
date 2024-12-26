@@ -1,10 +1,10 @@
 using System.Diagnostics;
 
-namespace DolbyVisionProject;
+namespace LibraryOptimizer;
 
-public class Converter
+public class ConverterBackend
 {
-    public Converter(ConsoleLog console)
+    public ConverterBackend(ConsoleLog console)
     {
         _console = console;
     }
@@ -36,7 +36,7 @@ public class Converter
         if (checkAll.ToLower() == "n")
         {
             _console.WriteLine("Grabbing recent files...");
-            var recentFilesIEnumerable = allFiles.Where(file => File.GetCreationTime(file) >= DateTime.Now.AddDays(-3));
+            var recentFilesIEnumerable = allFiles.Where(file => File.GetLastWriteTime(file) >= DateTime.Now.AddDays(-7));
             var recentFiles = recentFilesIEnumerable.ToList();
 
             return recentFiles;
@@ -102,22 +102,44 @@ public class Converter
         }
     }
 
-    public bool IsProfile7(string filePath)
+    public string GetFileInfo(string filePath)
     {
         //Grabs file info.
         //Note: hide_banner hides program banner for easier readability and removing unnecessary text
         var command = $"ffmpeg -i '{filePath}' -hide_banner -loglevel info";
-
         try
         {
-            var result = RunCommand(command, filePath);
-            
-            var configRecord = result.Contains("DOVI configuration record: version: 1.0, profile: 7");
-            return configRecord;
+            return RunCommand(command, filePath);
         }
         catch (Exception ex)
         {
-            _console.WriteLine($"Error detecting profile: {ex.Message}");
+            _console.WriteLine($"Error grabbing file info: {ex.Message}");
+            return "False";
+        }
+    }
+    
+    public bool IsProfile7(string fileInfo)
+    {
+        return fileInfo.Contains("DOVI configuration record: version: 1.0, profile: 7");
+    }
+    
+    public bool CanEncodeAv1(string filePath, string fileInfo)
+    {
+        //Grabs file info.
+        //Note: hide_banner hides program banner for easier readability and removing unnecessary text
+        var encodeCheckCommand = $"ffprobe -i '{filePath}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
+
+        try
+        {
+            var bitRateOutput = RunCommand(encodeCheckCommand, filePath).Split().Last();
+            var bitRate = int.Parse(bitRateOutput);
+            var bitRateCheck = bitRate > 15000000;
+
+            return !fileInfo.Contains("DOVI configuration record") && !fileInfo.ToLower().Contains("video: av1") && bitRateCheck;
+        }
+        catch (Exception ex)
+        {
+            _console.WriteLine($"Error detecting encodability: {ex.Message}");
             return false;
         }
     }
@@ -266,10 +288,10 @@ public class Converter
     }
     
     //Remuxes and will Encode file if above 75Mbps
-    public bool RemuxAndEncode(string filePath)
+    public bool RemuxAndEncodeHevc(string filePath)
     {
         var fileConverter = new FileConverter(this, filePath);
-        var converted = fileConverter.RemuxAndEncode();
+        var converted = fileConverter.RemuxAndEncodeHevc();
         
         return converted;
     }
@@ -284,10 +306,18 @@ public class Converter
     }
     
     //Only encodes file from environment variable
-    public bool Encode(string filePath)
+    public bool EncodeHevc(string filePath)
     {
         var fileConverter = new FileConverter(this, filePath);
-        var converted = fileConverter.Encode();
+        var converted = fileConverter.EncodeHevc();
+        
+        return converted;
+    }
+    
+    public bool EncodeAv1(string filePath)
+    {
+        var fileConverter = new FileConverter(this, filePath);
+        var converted = fileConverter.EncodeAv1();
         
         return converted;
     }

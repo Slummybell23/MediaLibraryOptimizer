@@ -21,15 +21,15 @@ RUN apt-get update && apt-get install -y \
 # Build stage: Compile the .NET app
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY ["DolbyVisionProject.csproj", "./"]
-RUN dotnet restore "DolbyVisionProject.csproj"
+COPY ["LibraryOptimizer.csproj", "./"]
+RUN dotnet restore "LibraryOptimizer.csproj"
 COPY . ./
 WORKDIR /src
-RUN dotnet build "DolbyVisionProject.csproj" -c Release -o /app/build
+RUN dotnet build "LibraryOptimizer.csproj" -c Release -o /app/build
 
 # Publish stage: Publish the compiled .NET app
 FROM build AS publish
-RUN dotnet publish "DolbyVisionProject.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "LibraryOptimizer.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Final runtime stage
 FROM base AS final
@@ -37,9 +37,6 @@ WORKDIR /app
 COPY --from=publish /app/publish .
 
 # Environment variables
-ENV TVSHOW_FOLDER=/tvShows
-ENV MOVIE_FOLDER=/movies
-ENV CONFIG_PATH=/config
 ENV CHECK_ALL=N
 ENV ENCODE=N
 ENV ENCODEFILES=N
@@ -47,4 +44,4 @@ ENV REMUX=N
 ENV STARTTIME=5
 
 # Run the app
-ENTRYPOINT ["dotnet", "DolbyVisionProject.dll"]
+ENTRYPOINT ["dotnet", "LibraryOptimizer.dll"]

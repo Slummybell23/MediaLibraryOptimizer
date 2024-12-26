@@ -1,16 +1,13 @@
 using System.Runtime.CompilerServices;
 
-namespace DolbyVisionProject;
+namespace LibraryOptimizer;
 
 public class FileConverter
 {
-    public FileConverter(Converter converter, string filePath)
+    public FileConverter(ConverterBackend converterBackend, string filePath)
     {
-        //filePath = filePath.Replace("(", "`(");
-        //filePath = filePath.Replace(")", "`)");
-        
-        Converter = converter;
-        Console = converter._console;
+        _converterBackend = converterBackend;
+        Console = converterBackend._console;
         this.FilePath = filePath;
         
         //Builds command strings
@@ -43,7 +40,7 @@ public class FileConverter
 
         //Checks if system has nvenc for hardware encoding.
         var nvencCheckCommand = "ffmpeg -hide_banner -encoders";
-        var nvencOutput = Converter.RunCommand(nvencCheckCommand, filePath);
+        var nvencOutput = _converterBackend.RunCommand(nvencCheckCommand, filePath);
         if(nvencOutput.Contains("NVIDIA NVENC hevc encoder"))
             //Uses nvidia gpu accelerated encoding.
             //WARNING: Slow, but far faster than cpu encoding.
@@ -55,6 +52,15 @@ public class FileConverter
             //WARNING: Highly advised against due to being extremely slow on cpu.
             ReEncodeHevcCommand = $"ffmpeg -i '{Profile8HevcFile}' -c:v libx265 -preset slow -b:v 60000k -maxrate 60000k -vbv-bufsize 20000 -x265-params 'keyint=48:min-keyint=24' -an '{EncodedHevc}'";
     
+        // EncodeAV1Command = 
+        //     $"ffmpeg -i '{filePath}' " +
+        //     $"-map 0 " +
+        //     $"-c:v libsvtav1 -preset 12 -crf 27 -svtav1-params tune=1 " +
+        //     $"-c:a copy -c:s copy " +
+        //     $"-map_metadata 0 -map_chapters 0 " +
+        //     $"'{OutputFile}'";
+        EncodeAV1Command = $"ffmpeg -i '{filePath}' -map 0 -c:v av1_nvenc -cq 27 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{OutputFile}'";
+        
         //After encoding, inject the rpu file back into the HEVC so Dolby Vision metadata is retained.
         InjectRpu = $"dovi_tool inject-rpu -i '{EncodedHevc}' -r '{RpuFile}' -o '{EncodedProfile8HevcFile}'";
         
@@ -71,10 +77,11 @@ public class FileConverter
         EncodedHevc = EncodedHevc.Replace("`", "");
         EncodedProfile8HevcFile = EncodedProfile8HevcFile.Replace("`", "");
         
+        FilePath = FilePath.Replace("`", "");
         OutputFile = OutputFile.Replace("`", "");
     }
     
-    private Converter Converter;
+    private ConverterBackend _converterBackend;
     private ConsoleLog Console;
     private string FilePath;
     
@@ -90,25 +97,26 @@ public class FileConverter
     private string ConvertCommand;
 
     private string ReEncodeHevcCommand;
+    private string EncodeAV1Command;
     private string ExtractRpuCommand;
     private string InjectRpu;
     
     private string RemuxCommandEncoded;
     private string RemuxCommand;
 
-    public bool RemuxAndEncode()
+    public bool RemuxAndEncodeHevc()
     {
         //Runs command sequence
         try
         {
             Console.WriteLine($"Extracting HEVC stream: {ExtractCommand}");
-            Converter.RunCommand(ExtractCommand, FilePath);
+            _converterBackend.RunCommand(ExtractCommand, FilePath);
 
             Console.WriteLine($"Converting to Profile 8: {ConvertCommand}");
-            Converter.RunCommand(ConvertCommand, FilePath);
+            _converterBackend.RunCommand(ConvertCommand, FilePath);
             
             var encodeCheckCommand = $"ffprobe -i '{FilePath}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
-            var bitRateOutput = Converter.RunCommand(encodeCheckCommand, FilePath).Split().Last();
+            var bitRateOutput = _converterBackend.RunCommand(encodeCheckCommand, FilePath).Split().Last();
             var bitRate = int.Parse(bitRateOutput);
             
             //If bitrate is above 75mbps, reencode.
@@ -117,32 +125,32 @@ public class FileConverter
             {
                 Console.WriteLine($"Re Encoding {MovieName}");
                 Console.WriteLine($"Extracting RPU: {ExtractRpuCommand}");
-                Converter.RunCommand(ExtractRpuCommand, FilePath);
+                _converterBackend.RunCommand(ExtractRpuCommand, FilePath);
 
                 Console.WriteLine($"Encoding HEVC: {ReEncodeHevcCommand}");
-                Converter.RunCommand(ReEncodeHevcCommand, FilePath);
-                Converter.DeleteFile(Profile8HevcFile);
+                _converterBackend.RunCommand(ReEncodeHevcCommand, FilePath);
+                _converterBackend.DeleteFile(Profile8HevcFile);
 
                 Console.WriteLine($"Injecting RPU: {InjectRpu}");
-                Converter.RunCommand(InjectRpu, FilePath);
-                Converter.DeleteFile(RpuFile);
-                Converter.DeleteFile(EncodedHevc);
+                _converterBackend.RunCommand(InjectRpu, FilePath);
+                _converterBackend.DeleteFile(RpuFile);
+                _converterBackend.DeleteFile(EncodedHevc);
             }
 
             if (needsEncoding)
             {
                 Console.WriteLine($"Remuxing to MKV: {RemuxCommandEncoded}");
-                Converter.RunCommand(RemuxCommandEncoded, FilePath);
+                _converterBackend.RunCommand(RemuxCommandEncoded, FilePath);
             }
             else
             {
                 Console.WriteLine($"Remuxing to MKV: {RemuxCommand}");
-                Converter.RunCommand(RemuxCommand, FilePath);
+                _converterBackend.RunCommand(RemuxCommand, FilePath);
             }
             
-            Converter.DeleteFile(EncodedProfile8HevcFile);
-            Converter.DeleteFile(HevcFile);
-            Converter.DeleteFile(FilePath);
+            _converterBackend.DeleteFile(EncodedProfile8HevcFile);
+            _converterBackend.DeleteFile(HevcFile);
+            _converterBackend.DeleteFile(FilePath);
             
             //Renames new mkv container to the original file and deletes original file.
             var renamedFilePath = FilePath;
@@ -160,11 +168,11 @@ public class FileConverter
         {
             //No matter what, if a fail occurs or if a success, always clear out files generated during script runs.
             Console.WriteLine("Cleaning up temporary files...");
-            Converter.DeleteFile(HevcFile);
-            Converter.DeleteFile(Profile8HevcFile);
-            Converter.DeleteFile(EncodedProfile8HevcFile);
-            Converter.DeleteFile(RpuFile);
-            Converter.DeleteFile(EncodedHevc);
+            _converterBackend.DeleteFile(HevcFile);
+            _converterBackend.DeleteFile(Profile8HevcFile);
+            _converterBackend.DeleteFile(EncodedProfile8HevcFile);
+            _converterBackend.DeleteFile(RpuFile);
+            _converterBackend.DeleteFile(EncodedHevc);
         }
     }
     
@@ -174,15 +182,15 @@ public class FileConverter
         try
         {
             Console.WriteLine($"Extracting HEVC stream: {ExtractCommand}");
-            Converter.RunCommand(ExtractCommand, FilePath);
+            _converterBackend.RunCommand(ExtractCommand, FilePath);
 
             Console.WriteLine($"Converting to Profile 8: {ConvertCommand}");
-            Converter.RunCommand(ConvertCommand, FilePath);
+            _converterBackend.RunCommand(ConvertCommand, FilePath);
             
             Console.WriteLine($"Remuxing to MKV: {RemuxCommand}");
-            Converter.RunCommand(RemuxCommand, FilePath);
-            Converter.DeleteFile(HevcFile);
-            Converter.DeleteFile(FilePath);
+            _converterBackend.RunCommand(RemuxCommand, FilePath);
+            _converterBackend.DeleteFile(HevcFile);
+            _converterBackend.DeleteFile(FilePath);
             
             //Renames new mkv container to the original file and deletes original file.
             var renamedFilePath = FilePath;
@@ -200,37 +208,37 @@ public class FileConverter
         {
             //No matter what, if a fail occurs or if a success, always clear out files generated during script runs.
             Console.WriteLine("Cleaning up temporary files...");
-            Converter.DeleteFile(HevcFile);
-            Converter.DeleteFile(Profile8HevcFile);
+            _converterBackend.DeleteFile(HevcFile);
+            _converterBackend.DeleteFile(Profile8HevcFile);
         }
     }
     
-    public bool Encode()
+    public bool EncodeHevc()
     {
         //Runs command sequence
         try
         {
             Console.WriteLine($"Extracting HEVC stream: {ExtractCommand}");
-            Converter.RunCommand(ExtractCommand, FilePath); //
+            _converterBackend.RunCommand(ExtractCommand, FilePath); //
             
             Console.WriteLine($"Re Encoding {MovieName}");
             Console.WriteLine($"Extracting RPU: {ExtractRpuCommand}");
-            Converter.RunCommand(ExtractRpuCommand, FilePath); //
+            _converterBackend.RunCommand(ExtractRpuCommand, FilePath); //
 
             Console.WriteLine($"Encoding HEVC: {ReEncodeHevcCommand}");
-            Converter.RunCommand(ReEncodeHevcCommand, FilePath);
-            Converter.DeleteFile(Profile8HevcFile);
+            _converterBackend.RunCommand(ReEncodeHevcCommand, FilePath);
+            _converterBackend.DeleteFile(Profile8HevcFile);
 
             Console.WriteLine($"Injecting RPU: {InjectRpu}");
-            Converter.RunCommand(InjectRpu, FilePath);
-            Converter.DeleteFile(RpuFile);
-            Converter.DeleteFile(EncodedHevc);
+            _converterBackend.RunCommand(InjectRpu, FilePath);
+            _converterBackend.DeleteFile(RpuFile);
+            _converterBackend.DeleteFile(EncodedHevc);
             
             Console.WriteLine($"Remuxing to MKV: {RemuxCommandEncoded}");
-            Converter.RunCommand(RemuxCommandEncoded, FilePath);
-            Converter.DeleteFile(EncodedProfile8HevcFile);
-            Converter.DeleteFile(HevcFile);
-            Converter.DeleteFile(FilePath);
+            _converterBackend.RunCommand(RemuxCommandEncoded, FilePath);
+            _converterBackend.DeleteFile(EncodedProfile8HevcFile);
+            _converterBackend.DeleteFile(HevcFile);
+            _converterBackend.DeleteFile(FilePath);
             
             //Renames new mkv container to the original file and deletes original file.
             var renamedFilePath = FilePath;
@@ -248,11 +256,51 @@ public class FileConverter
         {
             //No matter what, if a fail occurs or if a success, always clear out files generated during script runs.
             Console.WriteLine("Cleaning up temporary files...");
-            Converter.DeleteFile(HevcFile);
-            Converter.DeleteFile(Profile8HevcFile);
-            Converter.DeleteFile(EncodedProfile8HevcFile);
-            Converter.DeleteFile(RpuFile);
-            Converter.DeleteFile(EncodedHevc);
+            _converterBackend.DeleteFile(HevcFile);
+            _converterBackend.DeleteFile(Profile8HevcFile);
+            _converterBackend.DeleteFile(EncodedProfile8HevcFile);
+            _converterBackend.DeleteFile(RpuFile);
+            _converterBackend.DeleteFile(EncodedHevc);
+        }
+    }
+    
+    public bool EncodeAv1()
+    {
+        //Runs command sequence
+        try
+        {
+            Console.WriteLine($"Re Encoding {MovieName} To AV1");
+            _converterBackend.RunCommand(EncodeAV1Command, FilePath);
+
+            var oldFileSize = new FileInfo(FilePath).Length;
+            var newFileSize = new FileInfo(OutputFile).Length;
+
+            Console.WriteLine($"Old file size: {oldFileSize}");
+            Console.WriteLine($"New file size: {newFileSize}");
+            
+            if (newFileSize > oldFileSize)
+            {
+                _converterBackend.DeleteFile(OutputFile);
+                Console.WriteLine("Encoded file larger than original file. Deleting encoded file.");
+            }
+            else
+            {
+                _converterBackend.DeleteFile(FilePath);
+                
+                //Renames new mkv container to the original file and deletes original file.
+                var renamedFilePath = FilePath;
+                File.Move(OutputFile, renamedFilePath);
+
+                Console.WriteLine($"Conversion complete: {OutputFile}");
+            }
+            
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during conversion: {ex.Message}");
+            _converterBackend.DeleteFile(OutputFile);
+            return false;
         }
     }
 }
