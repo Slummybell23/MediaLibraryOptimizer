@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace LibraryOptimizer;
 
@@ -13,21 +14,15 @@ public class ConverterBackend
     
     
     //Builds list of files from input directories.
-    public List<string> BuildFilesList(string? movies, string? tvShows, string? checkAll)
+    public List<string> BuildFilesList(List<string> libraries, string? checkAll)
     {
         _console.WriteLine("Grabbing all files. Please wait...\nCan take a few minutes for large directories...");
         var allFiles = new List<string>();
 
-        if (!String.IsNullOrWhiteSpace(movies))
+        foreach (var library in libraries)
         {
-            _console.WriteLine("Grabbing movies...");
-            AppendFiles(movies, allFiles);
-        }
-
-        if (!String.IsNullOrWhiteSpace(tvShows))
-        {
-            _console.WriteLine("Grabbing tv shows...");
-            AppendFiles(tvShows, allFiles);
+            _console.WriteLine($"Grabbing {library}...");
+            AppendFiles(library, allFiles);
         }
 
         _console.WriteLine($"{allFiles.Count} files grabbed.");
@@ -45,29 +40,6 @@ public class ConverterBackend
         return allFiles;
     }
     
-    public List<string> BuildFilesList(string? movies, string? tvShows, List<string> encodeFiles)
-    {
-        _console.WriteLine("Grabbing all files. Please wait...\nCan take a few minutes for large directories...");
-        var allFiles = new List<string>();
-
-        if (!String.IsNullOrWhiteSpace(movies))
-        {
-            _console.WriteLine("Grabbing movies...");
-            FindFiles(movies, allFiles, encodeFiles);
-        }
-        
-        if (!String.IsNullOrWhiteSpace(tvShows) && allFiles.Count != encodeFiles.Count)
-        {
-            _console.WriteLine("Grabbing tv shows...");
-            FindFiles(tvShows, allFiles, encodeFiles);
-        }
-        
-        _console.WriteLine($"{allFiles.Count} files grabbed.");
-        
-        return allFiles;
-    }
-    
-    
     private void AppendFiles(string? library, List<string> allFiles)
     {
         //Generates an enumerable of a directory and iterates through it to append each item to allFiles and logs the addition.
@@ -78,52 +50,26 @@ public class ConverterBackend
             _console.WriteLine(media);
         }
     }
-    
-    private void FindFiles(string? library, List<string> foundFiles, List<string> filesToFind)
-    {
-        //Generates an enumerable of a directory and iterates through it to append each item to allFiles and logs the addition.
-        var libraryIEnumerable = Directory.EnumerateFiles(library, "*.mkv", SearchOption.AllDirectories);
-        var foundFileCount = 0;
-        foreach (var media in libraryIEnumerable)
-        {
-            foreach (var fileToFind in filesToFind)
-            {
-                if (media.Contains(fileToFind + ".mkv"))
-                {
-                    foundFileCount++;
-                    foundFiles.Add(media);
-                    _console.WriteLine(media);
-                    break;
-                }
-            }
 
-            if (foundFileCount >= filesToFind.Count)
-                break;
-        }
-    }
-
-    public string GetFileInfo(string filePath)
-    {
-        //Grabs file info.
-        //Note: hide_banner hides program banner for easier readability and removing unnecessary text
-        var command = $"ffmpeg -i '{filePath}' -hide_banner -loglevel info";
-        try
-        {
-            return RunCommand(command, filePath);
-        }
-        catch (Exception ex)
-        {
-            _console.WriteLine($"Error grabbing file info: {ex.Message}");
-            return "False";
-        }
-    }
-    
     public bool IsProfile7(string fileInfo)
     {
         return fileInfo.Contains("DOVI configuration record: version: 1.0, profile: 7");
     }
     
-    public bool CanEncodeAv1(string filePath, string fileInfo)
+    public bool CanEncodeAv1(string filePath, string fileInfo, double bitRate)
+    {
+        try
+        {
+            return !fileInfo.Contains("DOVI configuration record") && !fileInfo.ToLower().Contains("video: av1");
+        }
+        catch (Exception ex)
+        {
+            _console.WriteLine($"Error detecting encodability: {ex.Message}");
+            return false;
+        }
+    }
+    
+    public bool CanEncodeHevc(string filePath, string fileInfo, double bitRate)
     {
         //Grabs file info.
         //Note: hide_banner hides program banner for easier readability and removing unnecessary text
@@ -131,11 +77,9 @@ public class ConverterBackend
 
         try
         {
-            var bitRateOutput = RunCommand(encodeCheckCommand, filePath).Split().Last();
-            var bitRate = int.Parse(bitRateOutput);
-            var bitRateCheck = bitRate > 15000000;
-
-            return !fileInfo.Contains("DOVI configuration record") && !fileInfo.ToLower().Contains("video: av1") && bitRateCheck;
+            var bitRateCheck = true;//bitRate > 15;
+            return (!fileInfo.Contains("DOVI configuration record, profile: 7") &&
+                    fileInfo.Contains("DOVI configuration record"));
         }
         catch (Exception ex)
         {
@@ -164,7 +108,7 @@ public class ConverterBackend
         }
     }
 
-    private string RunCommandInWindows(string command, string file)
+    private string RunCommandInWindows(string command, string file, bool printOutput = true)
     {
         //Specifies starting arguments for running powershell script
         var process = new Process
@@ -180,11 +124,11 @@ public class ConverterBackend
             }
         };
         
-        var output = RunProccess(file, process);
+        var output = RunProccess(file, process, printOutput);
         return output;
     }
 
-    private string RunCommandInDocker(string command, string file)
+    private string RunCommandInDocker(string command, string file, bool printOutput = true)
     {
         //Specifies starting arguments for running bash script
         var process = new Process
@@ -200,11 +144,11 @@ public class ConverterBackend
             }
         };
 
-        var output = RunProccess(file, process);
+        var output = RunProccess(file, process, printOutput);
         return output;
     }
 
-    private string RunProccess(string file, Process process)
+    private string RunProccess(string file, Process process, bool printOutput = true)
     {
         process.Start();
         
@@ -223,7 +167,8 @@ public class ConverterBackend
                     && !line.Contains("Skipping NAL unit"))
                 {
                     outputText += line;
-                    _console.WriteLine($"{line} | File: {file}");
+                    if(printOutput)
+                        _console.WriteLine($"{line} | File: {file}");
                 }
             }
         });
@@ -241,7 +186,8 @@ public class ConverterBackend
                     && !line.Contains("Skipping NAL unit"))
                 {
                     errorText += line;
-                    _console.WriteLine($"{line} | File: {file}");
+                    if(printOutput)
+                        _console.WriteLine($"{line} | File: {file}");
                 }
             }
         });
@@ -255,31 +201,36 @@ public class ConverterBackend
         var combinedOutput = outputText + errorText;
 
         //Ignores FFmpeg warning.
-        if (errorText.Contains("At least one output file must be specified"))
+        if (errorText.Contains("At least one output file must be specified")
+            || errorText.Contains("Error splitting the argument list: Option not found"))
         {
-            _console.WriteLine("Warning: FFmpeg returned a minor error (ignored):");
-            _console.WriteLine(errorText);
+            if (printOutput)
+            {
+                _console.WriteLine("Warning: Returned a minor error (ignored):");
+                _console.WriteLine(errorText);
+
+            }
         }
         else if (process.ExitCode != 0)
         {
-            throw new Exception($"Command failed with exit code {process.ExitCode}: {errorText}");
+            throw new Exception($"Command failed with exit code {process.ExitCode}: {combinedOutput}");
         }
 
         _console.WriteLine("Process completed successfully.");
         return combinedOutput;
     }
 
-    public string RunCommand(string command, string file)
+    public string RunCommand(string command, string file, bool printOutput = true)
     {
         //Program is built to run in both windows and linux
         //(Although preferably in a linux based docker container)
         if (OperatingSystem.IsWindows())
         {
-            return RunCommandInWindows(command, file);
+            return RunCommandInWindows(command, file, printOutput);
         }
         else if (OperatingSystem.IsLinux())
         {
-            return RunCommandInDocker(command, file);
+            return RunCommandInDocker(command, file, printOutput);
         }
         else
         {
@@ -292,7 +243,8 @@ public class ConverterBackend
     {
         var fileConverter = new FileConverter(this, filePath);
         var converted = fileConverter.RemuxAndEncodeHevc();
-        
+        fileConverter.AppendMetadata();
+
         return converted;
     }
     
@@ -301,7 +253,8 @@ public class ConverterBackend
     {
         var fileConverter = new FileConverter(this, filePath);
         var converted = fileConverter.Remux();
-        
+        fileConverter.AppendMetadata();
+
         return converted;
     }
     
@@ -310,7 +263,8 @@ public class ConverterBackend
     {
         var fileConverter = new FileConverter(this, filePath);
         var converted = fileConverter.EncodeHevc();
-        
+        fileConverter.AppendMetadata();
+
         return converted;
     }
     
@@ -318,7 +272,19 @@ public class ConverterBackend
     {
         var fileConverter = new FileConverter(this, filePath);
         var converted = fileConverter.EncodeAv1();
+        fileConverter.AppendMetadata();
         
         return converted;
+    }
+
+    public bool ShouldBeProcessed(string filePath)
+    {
+        var grabMetadataCommand = $"ffprobe -i '{filePath}' -show_entries format_tags=LIBRARY_OPTIMIZER_APP -of default=noprint_wrappers=1";
+        var metadata = RunCommand(grabMetadataCommand, filePath, false);
+
+        if (metadata.Contains("Converted=True.") || metadata.Contains("Converted=False."))
+            return false;
+
+        return true;
     }
 }
