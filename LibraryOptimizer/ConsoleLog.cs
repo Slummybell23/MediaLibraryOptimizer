@@ -36,22 +36,22 @@ public class ConsoleLog
         Console.WriteLine(inputText);
     }
 
-    //Generates a log file in a movies respective name and folder containing info from WriteLine().
+    //Generates a log file and folder containing info from WriteLine().
     public void LogFile(string file, bool? converted)
     {
         var formatedDate = DateTime.Today.ToString("MM-dd-yyyy");
-        var logFolder = Path.Combine(_configDir, "logs", formatedDate, "movies");
+        var logFolder = Path.Combine(_configDir, "logs", formatedDate);
         
         Directory.CreateDirectory(logFolder);
 
-        var wasConverted = string.Empty;
+        var conversionStatus = string.Empty;
         if (converted == true)
-            wasConverted = "Converted";
+            conversionStatus = "Converted Successfully";
         else
-            wasConverted = "Not Converted";
-        var movie = Path.GetFileNameWithoutExtension(file) + " " + wasConverted;
+            conversionStatus = "Converted False";
+        var video = Path.GetFileNameWithoutExtension(file) + " " + conversionStatus;
         
-        var logFile = Path.Combine(logFolder, $"{movie}.txt");
+        var logFile = Path.Combine(logFolder, $"{video}.txt");
         
         //Overrides file if already existing.
         if (File.Exists(logFile))

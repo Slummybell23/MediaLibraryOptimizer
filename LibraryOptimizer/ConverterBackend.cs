@@ -7,30 +7,29 @@ public class ConverterBackend
 {
     public ConverterBackend(ConsoleLog console)
     {
-        _console = console;
+        Console = console;
     }
     
-    public ConsoleLog _console;
-    
+    public ConsoleLog Console;
     
     //Builds list of files from input directories.
     public List<string> BuildFilesList(List<string> libraries, string? checkAll)
     {
-        _console.WriteLine("Grabbing all files. Please wait...\nCan take a few minutes for large directories...");
+        Console.WriteLine("Grabbing all files. Please wait...\nCan take a few minutes for large directories...");
         var allFiles = new List<string>();
 
         foreach (var library in libraries)
         {
-            _console.WriteLine($"Grabbing {library}...");
+            Console.WriteLine($"Grabbing {library}...");
             AppendFiles(library, allFiles);
         }
 
-        _console.WriteLine($"{allFiles.Count} files grabbed.");
+        Console.WriteLine($"{allFiles.Count} files grabbed.");
 
         //Based on the environment var passed into the container, will return recently added files from 3 days ago if "n".
         if (checkAll.ToLower() == "n")
         {
-            _console.WriteLine("Grabbing recent files...");
+            Console.WriteLine("Grabbing recent files...");
             var recentFilesIEnumerable = allFiles.Where(file => File.GetLastWriteTime(file) >= DateTime.Now.AddDays(-7));
             var recentFiles = recentFilesIEnumerable.ToList();
 
@@ -47,7 +46,7 @@ public class ConverterBackend
         foreach (var media in libraryIEnumerable)
         {
             allFiles.Add(media);
-            _console.WriteLine(media);
+            Console.WriteLine(media);
         }
     }
 
@@ -60,11 +59,13 @@ public class ConverterBackend
     {
         try
         {
-            return !fileInfo.Contains("DOVI configuration record") && !fileInfo.ToLower().Contains("video: av1");
+            var av1 = fileInfo.ToLower().Contains("video: av1");
+            return !fileInfo.ToLower().Contains("video: av1") &&
+                    !fileInfo.Contains("DOVI configuration record");
         }
         catch (Exception ex)
         {
-            _console.WriteLine($"Error detecting encodability: {ex.Message}");
+            Console.WriteLine($"Error detecting encodability: {ex.Message}");
             return false;
         }
     }
@@ -83,7 +84,7 @@ public class ConverterBackend
         }
         catch (Exception ex)
         {
-            _console.WriteLine($"Error detecting encodability: {ex.Message}");
+            Console.WriteLine($"Error detecting encodability: {ex.Message}");
             return false;
         }
     }
@@ -95,16 +96,16 @@ public class ConverterBackend
             try
             {
                 File.Delete(filePath);
-                _console.WriteLine($"Deleted: {filePath}");
+                Console.WriteLine($"Deleted: {filePath}");
             }
             catch (Exception ex)
             {
-                _console.WriteLine($"Error deleting file {filePath}: {ex.Message}");
+                Console.WriteLine($"Error deleting file {filePath}: {ex.Message}");
             }
         }
         else
         {
-            _console.WriteLine($"File not found, skipping delete: {filePath}");
+            Console.WriteLine($"File not found, skipping delete: {filePath}");
         }
     }
 
@@ -168,7 +169,7 @@ public class ConverterBackend
                 {
                     outputText += line;
                     if(printOutput)
-                        _console.WriteLine($"{line} | File: {file}");
+                        Console.WriteLine($"{line} | File: {file}");
                 }
             }
         });
@@ -187,7 +188,7 @@ public class ConverterBackend
                 {
                     errorText += line;
                     if(printOutput)
-                        _console.WriteLine($"{line} | File: {file}");
+                        Console.WriteLine($"{line} | File: {file}");
                 }
             }
         });
@@ -206,8 +207,8 @@ public class ConverterBackend
         {
             if (printOutput)
             {
-                _console.WriteLine("Warning: Returned a minor error (ignored):");
-                _console.WriteLine(errorText);
+                Console.WriteLine("Warning: Returned a minor error (ignored):");
+                Console.WriteLine(errorText);
 
             }
         }
@@ -216,7 +217,7 @@ public class ConverterBackend
             throw new Exception($"Command failed with exit code {process.ExitCode}: {combinedOutput}");
         }
 
-        _console.WriteLine("Process completed successfully.");
+        Console.WriteLine("Process completed successfully.");
         return combinedOutput;
     }
 
@@ -268,23 +269,42 @@ public class ConverterBackend
         return converted;
     }
     
-    public bool EncodeAv1(string filePath)
+    public bool EncodeAv1(string filePath, double bitRate)
     {
-        var fileConverter = new FileConverter(this, filePath);
+        var fileConverter = new FileConverter(this, filePath, bitRate);
         var converted = fileConverter.EncodeAv1();
         fileConverter.AppendMetadata();
         
         return converted;
     }
-
-    public bool ShouldBeProcessed(string filePath)
+    
+    public bool ShouldBeProcessed(string filePath, bool retryFailed)
     {
         var grabMetadataCommand = $"ffprobe -i '{filePath}' -show_entries format_tags=LIBRARY_OPTIMIZER_APP -of default=noprint_wrappers=1";
         var metadata = RunCommand(grabMetadataCommand, filePath, false);
 
-        if (metadata.Contains("Converted=True.") || metadata.Contains("Converted=False."))
+        if (metadata.Contains("Converted=True.")
+            || (metadata.Contains("Converted=False.") && !retryFailed))
             return false;
-
+        if (metadata.Contains("Converted=False.") && retryFailed)
+            return true;
+        
         return true;
+    }
+
+    public string FileFormatToCommand(string file)
+    {
+        var formatedFile = file.Replace("'", "''");
+        formatedFile = formatedFile.Replace("’", "'’");
+
+        return formatedFile;
+    }
+    
+    public string FileRemoveFormat(string file)
+    {
+        var originalFile = file.Replace("''", "'");
+        originalFile = originalFile.Replace("'’", "’");
+
+        return originalFile;
     }
 }

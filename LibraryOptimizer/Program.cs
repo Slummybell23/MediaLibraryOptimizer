@@ -7,7 +7,7 @@ public abstract class Program
 {
    private static void Main(string[] args)
    {
-        var wrapper = new LibraryOptmizerWrapper();
+        var wrapper = new LibraryOptmizerWrapper.LibraryOptmizerWrapper();
 
         wrapper.SetupWrapperVars();
 
@@ -17,6 +17,7 @@ public abstract class Program
             wrapper.CheckAll = "y";
             wrapper.Libraries = new List<string>() { "Z:\\Plex\\TV show" };
             //wrapper.MovieFolder = "E:\\ssdMovie\\Avatar Test";
+            //"Z:\\Plex\\Movie", 
             //movieFolder = "Z:\\Plex\\Movie\\Coraline (2009)";
             //wrapper.TvShowFolder = "Z:\\Plex\\TV show";
             wrapper.RemuxDolbyVision = false;

@@ -1,4 +1,4 @@
-namespace LibraryOptimizer;
+namespace LibraryOptimizer.LibraryOptmizerWrapper;
 
 public class LibraryOptimzerWrapperYaml
 {
@@ -8,4 +8,5 @@ public class LibraryOptimzerWrapperYaml
     public bool EncodeHevc = false;
     public bool EncodeAv1 = false;
     public bool RemuxDolbyVision = false;
+    public bool RetryFailed = false;
 }
