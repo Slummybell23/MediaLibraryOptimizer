@@ -7,7 +7,7 @@ public abstract class Program
 {
    private static void Main(string[] args)
    {
-        var wrapper = new LibraryOptmizerWrapper.LibraryOptmizerWrapper();
+        var wrapper = new LibraryOptmizer.LibraryOptmizer();
 
         wrapper.SetupWrapperVars();
 

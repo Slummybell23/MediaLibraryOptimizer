@@ -36,13 +36,9 @@ public class FileConverter
         _convertCommand = $"dovi_tool -m 2 convert -i '{_hevcFile}' -o '{_profile8HevcFile}'";
 
         //Extracting rpu file which contains the Dolby Vision metadata. Otherwise, FFmpeg loses Dolby Vision metadata.
-        _extractProfile7RpuCommand = $"dovi_tool extract-rpu -i '{_profile8HevcFile}' -o '{_rpuFile}'";
-
-        //Extracting rpu file which contains the Dolby Vision metadata. Otherwise, FFmpeg loses Dolby Vision metadata.
         _extractProfile8RpuCommand = $"dovi_tool extract-rpu -i '{_hevcFile}' -o '{_rpuFile}'";
         
         //Nvidia GPU Encoding
-        _reEncodeHevcProfile7Command = $"ffmpeg -i '{_profile8HevcFile}' -c:v hevc_nvenc -preset p7 -cq 3 -c:a copy '{_encodedHevc}'";
         _reEncodeHevcProfile8Command = $"ffmpeg -i '{_hevcFile}' -c:v hevc_nvenc -preset p7 -cq 3 -c:a copy '{_encodedHevc}'";
             
         //Nvidia GPU Encoding
@@ -110,10 +106,8 @@ public class FileConverter
     private string _extractCommand;
     private string _convertCommand;
 
-    private string _reEncodeHevcProfile7Command;
     private string _reEncodeHevcProfile8Command;
     private string _encodeAv1Command;
-    private string _extractProfile7RpuCommand;
     private string _extractProfile8RpuCommand;
     private string _injectRpu;
 
@@ -134,56 +128,57 @@ public class FileConverter
             _console.WriteLine($"Converting to Profile 8: {_convertCommand}");
             _converterBackend.RunCommand(_convertCommand, _filePath);
             
-            var encodeCheckCommand = $"ffprobe -i '{_filePath}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
-            var bitRateOutput = _converterBackend.RunCommand(encodeCheckCommand, _filePath).Split().Last();
-            var bitRate = double.Parse(bitRateOutput) / 1000000.0;
+            _console.WriteLine($"Re Encoding {_videoName}");
+            _console.WriteLine($"Extracting RPU: {_extractProfile8RpuCommand}");
+            _converterBackend.RunCommand(_extractProfile8RpuCommand, _filePath);
+
+            _console.WriteLine($"Encoding HEVC: {_reEncodeHevcProfile8Command}");
             
-            //If bitrate is above 75mbps, reencode.
-            var needsEncoding = bitRate > 15;
-            if (needsEncoding)
+            var failedOutput = string.Empty;
+            try
             {
-                _console.WriteLine($"Re Encoding {_videoName}");
-                _console.WriteLine($"Extracting RPU: {_extractProfile7RpuCommand}");
-                _converterBackend.RunCommand(_extractProfile7RpuCommand, _filePath);
-
-                _console.WriteLine($"Encoding HEVC: {_reEncodeHevcProfile7Command}");
-                _converterBackend.RunCommand(_reEncodeHevcProfile7Command, _filePath);
-                _converterBackend.DeleteFile(_profile8HevcFile);
-
-                _console.WriteLine($"Injecting RPU: {_injectRpu}");
-                _converterBackend.RunCommand(_injectRpu, _filePath);
-                _converterBackend.DeleteFile(_rpuFile);
-                _converterBackend.DeleteFile(_encodedHevc);
-                
-                _console.WriteLine($"Remuxing Encoded to MKV: {_remuxCommandEncoded}");
-                _converterBackend.RunCommand(_remuxCommandEncoded, _filePath);
-                
-                var oldFileSize = new FileInfo(_filePath).Length;
-                var newFileSize = new FileInfo(_outputFile).Length;
-
-                _console.WriteLine($"Old file size: {oldFileSize}");
-                _console.WriteLine($"New file size: {newFileSize}");
+                failedOutput = _converterBackend.RunCommand(_reEncodeHevcProfile8Command, _filePath, false);
+            }
+            catch
+            {
+                _console.WriteLine(failedOutput);
+                throw;
+            }
             
-                if (newFileSize > oldFileSize)
-                {
-                    _console.WriteLine("Encoded file larger than original file. Deleting encoded file.");
-                    _converterBackend.DeleteFile(_outputFile);
-                }
-                else
-                {
-                    _converterBackend.DeleteFile(_filePath);
-                    _converterBackend.DeleteFile(_encodedProfile8HevcFile);
-                    _converterBackend.DeleteFile(_hevcFile);
-                    
-                    //Renames new mkv container to the original file and deletes original file.
-                    File.Move(_outputFile, _filePath, true);
+            _converterBackend.DeleteFile(_profile8HevcFile);
 
-                    _console.WriteLine($"Conversion complete: {_outputFile}");
+            _console.WriteLine($"Injecting RPU: {_injectRpu}");
+            _converterBackend.RunCommand(_injectRpu, _filePath);
+            _converterBackend.DeleteFile(_rpuFile);
+            _converterBackend.DeleteFile(_encodedHevc);
+            
+            _console.WriteLine($"Remuxing Encoded to MKV: {_remuxCommandEncoded}");
+            _converterBackend.RunCommand(_remuxCommandEncoded, _filePath);
+            
+            var oldFileSize = new FileInfo(_filePath).Length;
+            var newFileSize = new FileInfo(_outputFile).Length;
 
-                    _converted = true;
-                    return true;
-                }
+            _console.WriteLine($"Old file size: {oldFileSize}");
+            _console.WriteLine($"New file size: {newFileSize}");
+        
+            if (newFileSize > oldFileSize)
+            {
+                _console.WriteLine("Encoded file larger than original file. Deleting encoded file.");
+                _converterBackend.DeleteFile(_outputFile);
+            }
+            else
+            {
+                _converterBackend.DeleteFile(_filePath);
+                _converterBackend.DeleteFile(_encodedProfile8HevcFile);
+                _converterBackend.DeleteFile(_hevcFile);
                 
+                //Renames new mkv container to the original file and deletes original file.
+                File.Move(_outputFile, _filePath, true);
+
+                _console.WriteLine($"Conversion complete: {_outputFile}");
+
+                _converted = true;
+                return true;
             }
 
             _console.WriteLine($"Remuxing Non Encoded to MKV: {_remuxCommand}");
@@ -268,11 +263,22 @@ public class FileConverter
             _console.WriteLine($"Extracting HEVC stream: {_extractCommand}");
             _converterBackend.RunCommand(_extractCommand, _filePath);
             
-            _console.WriteLine($"Extracting RPU: {_extractProfile7RpuCommand}");
+            _console.WriteLine($"Extracting RPU: {_extractProfile8RpuCommand}");
             _converterBackend.RunCommand(_extractProfile8RpuCommand, _filePath);
 
-            _console.WriteLine($"Encoding HEVC: {_reEncodeHevcProfile7Command}");
-            _converterBackend.RunCommand(_reEncodeHevcProfile8Command, _filePath);
+            _console.WriteLine($"Encoding HEVC: {_reEncodeHevcProfile8Command}");
+
+            var failedOutput = string.Empty;
+            try
+            {
+                failedOutput = _converterBackend.RunCommand(_reEncodeHevcProfile8Command, _filePath, false);
+            }
+            catch
+            {
+                _console.WriteLine(failedOutput);
+                throw;
+            }
+            
             _converterBackend.DeleteFile(_profile8HevcFile);
 
             _console.WriteLine($"Injecting RPU: {_injectRpu}");

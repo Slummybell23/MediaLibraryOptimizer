@@ -3,9 +3,9 @@ using System.Text;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace LibraryOptimizer.LibraryOptmizerWrapper;
+namespace LibraryOptimizer.LibraryOptmizer;
 
-public class LibraryOptmizerWrapper
+public class LibraryOptmizer
 {
     //Creates objects necessary for logging and converting files.
     private static ConsoleLog _consoleLog = new ConsoleLog();
@@ -50,7 +50,7 @@ public class LibraryOptmizerWrapper
                 .Build();
             
             //yaml contains a string containing your YAML
-            var yamlObj = deserializer.Deserialize<LibraryOptimzerWrapperYaml>(reader);
+            var yamlObj = deserializer.Deserialize<LibraryOptimzerYaml>(reader);
 
             RemuxDolbyVision = yamlObj.RemuxDolbyVision;
             EncodeHevc = yamlObj.EncodeHevc;
@@ -66,7 +66,7 @@ public class LibraryOptmizerWrapper
         }
         else
         {
-            var wrapperJobject = new LibraryOptimzerWrapperYaml();
+            var wrapperJobject = new LibraryOptimzerYaml();
 
             var serializer = new SerializerBuilder()
                 .WithNamingConvention(CamelCaseNamingConvention.Instance)

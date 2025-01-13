@@ -1,6 +1,6 @@
-namespace LibraryOptimizer.LibraryOptmizerWrapper;
+namespace LibraryOptimizer.LibraryOptmizer;
 
-public class LibraryOptimzerWrapperYaml
+public class LibraryOptimzerYaml
 {
     public List<string> LibraryPaths { get; set; } = new List<string>() {"Replace Me", "Replace Me", "..."};
     public string? CheckAll { get; set; }  = "y";
