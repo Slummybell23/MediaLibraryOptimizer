@@ -12,7 +12,7 @@ public class LibraryOptmizerWrapper
     private ConverterBackend _converterBackend = new ConverterBackend(_consoleLog);
 
     public string dataFolder = "/data";
-    public string highSpeedPathFolder = "/fastDrive";
+    public string highSpeedPathFolder = "/tmp";
     public List<string> Libraries = new List<string>();
     public string? CheckAll = null;
     public int StartHour = DateTime.Now.Hour;
