@@ -15,7 +15,8 @@ public abstract class Program
         {
             //File paths specified to my Windows machine for debugging.
             wrapper.CheckAll = "y";
-            wrapper.Libraries = new List<string>() { "Z:\\Plex\\TV show" };
+            //wrapper.Libraries = new List<string>() { "Z:\\Plex\\Movie" };
+            wrapper.Libraries = new List<string>() { "Z:\\Plex\\TV show", "Z:\\Plex\\Movie" };
             //wrapper.MovieFolder = "E:\\ssdMovie\\Avatar Test";
             //"Z:\\Plex\\Movie", 
             //movieFolder = "Z:\\Plex\\Movie\\Coraline (2009)";

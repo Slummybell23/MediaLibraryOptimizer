@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
@@ -5,57 +6,45 @@ namespace LibraryOptimizer;
 
 public class ConverterBackend
 {
-    public ConverterBackend(ConsoleLog console)
-    {
-        Console = console;
-    }
-    
-    public ConsoleLog Console;
-    
     //Builds list of files from input directories.
-    public List<string> BuildFilesList(List<string> libraries, string? checkAll)
+    public static IEnumerable<FileInfo> BuildFilesList(List<string> libraries, string? checkAll)
     {
-        Console.WriteLine("Grabbing all files. Please wait...\nCan take a few minutes for large directories...");
-        var allFiles = new List<string>();
-
+        ConsoleLog.WriteLine("Grabbing all files. Please wait...\nCan take a few minutes for large directories...");
+        var allFiles = new List<FileInfo>();
         foreach (var library in libraries)
         {
-            Console.WriteLine($"Grabbing {library}...");
-            AppendFiles(library, allFiles);
-        }
-
-        Console.WriteLine($"{allFiles.Count} files grabbed.");
-
-        //Based on the environment var passed into the container, will return recently added files from 3 days ago if "n".
-        if (checkAll.ToLower() == "n")
-        {
-            Console.WriteLine("Grabbing recent files...");
-            var recentFilesIEnumerable = allFiles.Where(file => File.GetLastWriteTime(file) >= DateTime.Now.AddDays(-7));
-            var recentFiles = recentFilesIEnumerable.ToList();
-
-            return recentFiles;
+            ConsoleLog.WriteLine($"Grabbing {library}..."); 
+            GetFiles(library, allFiles);
         }
         
-        return allFiles;
+        var sortedFiles = allFiles.OrderByDescending(r => r.CreationTime);
+        
+        //Based on the environment var passed into the container, will return recently added files from 3 days ago if "n".
+        if (checkAll.ToLower() != "n") 
+            return sortedFiles;
+        
+        ConsoleLog.WriteLine("Grabbing recent files...");
+
+        var recentInDir = sortedFiles.Where(file => file.LastWriteTime >= DateTime.Now.AddDays(-7));
+            
+        return recentInDir;
     }
     
-    private void AppendFiles(string? library, List<string> allFiles)
+    private static void GetFiles(string? library, List<FileInfo> allFiles)
     {
         //Generates an enumerable of a directory and iterates through it to append each item to allFiles and logs the addition.
-        var libraryIEnumerable = Directory.EnumerateFiles(library, "*.mkv", SearchOption.AllDirectories);
-        foreach (var media in libraryIEnumerable)
-        {
-            allFiles.Add(media);
-            Console.WriteLine(media);
-        }
+        var directory = new DirectoryInfo(library);
+        var unSortedFiles = directory.GetFiles("*.mkv", SearchOption.AllDirectories);
+        
+        allFiles.AddRange(unSortedFiles);
     }
 
-    public bool IsProfile7(string fileInfo)
+    public static bool IsProfile7(string fileInfo)
     {
         return fileInfo.Contains("DOVI configuration record: version: 1.0, profile: 7");
     }
     
-    public bool CanEncodeAv1(string filePath, string fileInfo, double bitRate)
+    public static bool CanEncodeAv1(string filePath, string fileInfo, double bitRate)
     {
         try
         {
@@ -65,12 +54,12 @@ public class ConverterBackend
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error detecting encodability: {ex.Message}");
+            ConsoleLog.WriteLine($"Error detecting encodability: {ex.Message}");
             return false;
         }
     }
     
-    public bool CanEncodeHevc(string filePath, string fileInfo, double bitRate)
+    public static bool CanEncodeHevc(string filePath, string fileInfo, double bitRate)
     {
         //Grabs file info.
         //Note: hide_banner hides program banner for easier readability and removing unnecessary text
@@ -84,32 +73,32 @@ public class ConverterBackend
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error detecting encodability: {ex.Message}");
+            ConsoleLog.WriteLine($"Error detecting encodability: {ex.Message}");
             return false;
         }
     }
 
-    public void DeleteFile(string filePath)
+    public static void DeleteFile(string filePath)
     {
         if (File.Exists(filePath))
         {
             try
             {
                 File.Delete(filePath);
-                Console.WriteLine($"Deleted: {filePath}");
+                ConsoleLog.WriteLine($"Deleted: {filePath}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error deleting file {filePath}: {ex.Message}");
+                ConsoleLog.WriteLine($"Error deleting file {filePath}: {ex.Message}");
             }
         }
         else
         {
-            Console.WriteLine($"File not found, skipping delete: {filePath}");
+            ConsoleLog.WriteLine($"File not found, skipping delete: {filePath}");
         }
     }
 
-    private string RunCommandInWindows(string command, string file, bool printOutput = true)
+    private static string RunCommandInWindows(string command, string file, bool printOutput = true)
     {
         //Specifies starting arguments for running powershell script
         var process = new Process
@@ -129,7 +118,7 @@ public class ConverterBackend
         return output;
     }
 
-    private string RunCommandInDocker(string command, string file, bool printOutput = true)
+    private static string RunCommandInDocker(string command, string file, bool printOutput = true)
     {
         //Specifies starting arguments for running bash script
         var process = new Process
@@ -149,7 +138,7 @@ public class ConverterBackend
         return output;
     }
 
-    private string RunProccess(string file, Process process, bool printOutput = true)
+    private static string RunProccess(string file, Process process, bool printOutput = true)
     {
         process.Start();
         
@@ -163,13 +152,13 @@ public class ConverterBackend
             while ((line = process.StandardOutput.ReadLine()!) != null)
             {
                 //Ignores specific outputs
-                //Allowed outputs get logged to a logFile in the console object.
+                //Allowed outputs get logged to a logFile in the ConsoleLog object.
                 if (!line.Contains("Last message repeated") 
                     && !line.Contains("Skipping NAL unit"))
                 {
                     outputText += line;
                     if(printOutput)
-                        Console.WriteLine($"{line} | File: {file}");
+                        ConsoleLog.WriteLine($"{line} | File: {file}");
                 }
             }
         });
@@ -182,13 +171,13 @@ public class ConverterBackend
             while ((line = process.StandardError.ReadLine()!) != null)
             {
                 //Ignores specific outputs
-                //Allowed outputs get logged to a logFile in the console object.
+                //Allowed outputs get logged to a logFile in the ConsoleLog object.
                 if (!line.Contains("Last message repeated") 
                     && !line.Contains("Skipping NAL unit"))
                 {
                     errorText += line;
                     if(printOutput)
-                        Console.WriteLine($"{line} | File: {file}");
+                        ConsoleLog.WriteLine($"{line} | File: {file}");
                 }
             }
         });
@@ -207,8 +196,8 @@ public class ConverterBackend
         {
             if (printOutput)
             {
-                Console.WriteLine("Warning: Returned a minor error (ignored):");
-                Console.WriteLine(errorText);
+                ConsoleLog.WriteLine("Warning: Returned a minor error (ignored):");
+                ConsoleLog.WriteLine(errorText);
 
             }
         }
@@ -217,11 +206,11 @@ public class ConverterBackend
             throw new Exception($"Command failed with exit code {process.ExitCode}: {combinedOutput}");
         }
 
-        Console.WriteLine("Process completed successfully.");
+        ConsoleLog.WriteLine("Process completed successfully.");
         return combinedOutput;
     }
 
-    public string RunCommand(string command, string file, bool printOutput = true)
+    public static string RunCommand(string command, string file, bool printOutput = true)
     {
         //Program is built to run in both windows and linux
         //(Although preferably in a linux based docker container)
@@ -240,9 +229,9 @@ public class ConverterBackend
     }
     
     //Remuxes and will Encode file if above 75Mbps
-    public bool RemuxAndEncodeHevc(string filePath)
+    public static ConverterStatus RemuxAndEncodeHevc(string filePath)
     {
-        var fileConverter = new FileConverter(this, filePath);
+        var fileConverter = new FileConverter(filePath);
         var converted = fileConverter.RemuxAndEncodeHevc();
         fileConverter.AppendMetadata();
 
@@ -250,9 +239,9 @@ public class ConverterBackend
     }
     
     //Only remux file from Dolby Vision Profile 7 to Profile 8
-    public bool Remux(string filePath)
+    public static ConverterStatus Remux(string filePath)
     {
-        var fileConverter = new FileConverter(this, filePath);
+        var fileConverter = new FileConverter(filePath);
         var converted = fileConverter.Remux();
         fileConverter.AppendMetadata();
 
@@ -260,25 +249,25 @@ public class ConverterBackend
     }
     
     //Only encodes file from environment variable
-    public bool EncodeHevc(string filePath)
+    public static ConverterStatus EncodeHevc(string filePath)
     {
-        var fileConverter = new FileConverter(this, filePath);
+        var fileConverter = new FileConverter(filePath);
         var converted = fileConverter.EncodeHevc();
         fileConverter.AppendMetadata();
 
         return converted;
     }
     
-    public bool EncodeAv1(string filePath, double bitRate)
+    public static ConverterStatus EncodeAv1(string filePath, double bitRate)
     {
-        var fileConverter = new FileConverter(this, filePath, bitRate);
+        var fileConverter = new FileConverter(filePath, bitRate);
         var converted = fileConverter.EncodeAv1();
         fileConverter.AppendMetadata();
         
         return converted;
     }
     
-    public bool ShouldBeProcessed(string filePath, bool retryFailed)
+    public static bool ShouldBeProcessed(string filePath, bool retryFailed)
     {
         var grabMetadataCommand = $"ffprobe -i '{filePath}' -show_entries format_tags=LIBRARY_OPTIMIZER_APP -of default=noprint_wrappers=1";
         var metadata = RunCommand(grabMetadataCommand, filePath, false);
@@ -292,7 +281,7 @@ public class ConverterBackend
         return true;
     }
 
-    public string FileFormatToCommand(string file)
+    public static string FileFormatToCommand(string file)
     {
         var formatedFile = file.Replace("'", "''");
         formatedFile = formatedFile.Replace("’", "'’");
@@ -300,7 +289,7 @@ public class ConverterBackend
         return formatedFile;
     }
     
-    public string FileRemoveFormat(string file)
+    public static string FileRemoveFormat(string file)
     {
         var originalFile = file.Replace("''", "'");
         originalFile = originalFile.Replace("'’", "’");

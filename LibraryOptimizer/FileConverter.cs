@@ -4,10 +4,8 @@ namespace LibraryOptimizer;
 
 public class FileConverter
 {
-    public FileConverter(ConverterBackend converterBackend, string filePath)
+    public FileConverter(string filePath)
     {
-        _converterBackend = converterBackend;
-        _console = converterBackend.Console;
         _commandFilePath = filePath;
         
         //Builds command strings
@@ -59,8 +57,8 @@ public class FileConverter
         //=====================================
         
         //Remove formatting for deleting.
-        _filePath = _converterBackend.FileRemoveFormat(filePath);
-        _outputFile = _converterBackend.FileRemoveFormat(_commandOutputFile);
+        _filePath = ConverterBackend.FileRemoveFormat(filePath);
+        _outputFile = ConverterBackend.FileRemoveFormat(_commandOutputFile);
         
         _videoName = Path.GetFileNameWithoutExtension(_filePath);
         directory = Path.GetDirectoryName(_filePath)!;
@@ -73,7 +71,7 @@ public class FileConverter
     }
     
     //Constructor Chaining
-    public FileConverter(ConverterBackend converterBackend, string filePath, double bitRate) : this(converterBackend, filePath)
+    public FileConverter(string filePath, double bitRate) : this(filePath)
     {
         if (bitRate >= 12)
         {
@@ -89,8 +87,7 @@ public class FileConverter
         }
     }
 
-    private ConverterBackend _converterBackend;
-    private ConsoleLog _console;
+    private ConverterBackend ConverterBackend;
     private string _filePath;
     private string _commandFilePath;
 
@@ -117,270 +114,270 @@ public class FileConverter
     private bool? _converted = null;
     private string _failedReason = string.Empty;
 
-    public bool RemuxAndEncodeHevc()
+    public ConverterStatus RemuxAndEncodeHevc()
     {
         //Runs command sequence
         try
         {
-            _console.WriteLine($"Extracting HEVC stream: {_extractCommand}");
-            _converterBackend.RunCommand(_extractCommand, _filePath);
+            ConsoleLog.WriteLine($"Extracting HEVC stream: {_extractCommand}");
+            ConverterBackend.RunCommand(_extractCommand, _filePath);
 
-            _console.WriteLine($"Converting to Profile 8: {_convertCommand}");
-            _converterBackend.RunCommand(_convertCommand, _filePath);
+            ConsoleLog.WriteLine($"Converting to Profile 8: {_convertCommand}");
+            ConverterBackend.RunCommand(_convertCommand, _filePath);
             
-            _console.WriteLine($"Re Encoding {_videoName}");
-            _console.WriteLine($"Extracting RPU: {_extractProfile8RpuCommand}");
-            _converterBackend.RunCommand(_extractProfile8RpuCommand, _filePath);
+            ConsoleLog.WriteLine($"Re Encoding {_videoName}");
+            ConsoleLog.WriteLine($"Extracting RPU: {_extractProfile8RpuCommand}");
+            ConverterBackend.RunCommand(_extractProfile8RpuCommand, _filePath);
 
-            _console.WriteLine($"Encoding HEVC: {_reEncodeHevcProfile8Command}");
+            ConsoleLog.WriteLine($"Encoding HEVC: {_reEncodeHevcProfile8Command}");
             
             var failedOutput = string.Empty;
             try
             {
-                failedOutput = _converterBackend.RunCommand(_reEncodeHevcProfile8Command, _filePath, false);
+                failedOutput = ConverterBackend.RunCommand(_reEncodeHevcProfile8Command, _filePath, false);
             }
             catch
             {
-                _console.WriteLine(failedOutput);
+                ConsoleLog.WriteLine(failedOutput);
                 throw;
             }
             
-            _converterBackend.DeleteFile(_profile8HevcFile);
+            ConverterBackend.DeleteFile(_profile8HevcFile);
 
-            _console.WriteLine($"Injecting RPU: {_injectRpu}");
-            _converterBackend.RunCommand(_injectRpu, _filePath);
-            _converterBackend.DeleteFile(_rpuFile);
-            _converterBackend.DeleteFile(_encodedHevc);
+            ConsoleLog.WriteLine($"Injecting RPU: {_injectRpu}");
+            ConverterBackend.RunCommand(_injectRpu, _filePath);
+            ConverterBackend.DeleteFile(_rpuFile);
+            ConverterBackend.DeleteFile(_encodedHevc);
             
-            _console.WriteLine($"Remuxing Encoded to MKV: {_remuxCommandEncoded}");
-            _converterBackend.RunCommand(_remuxCommandEncoded, _filePath);
+            ConsoleLog.WriteLine($"Remuxing Encoded to MKV: {_remuxCommandEncoded}");
+            ConverterBackend.RunCommand(_remuxCommandEncoded, _filePath);
             
             var oldFileSize = new FileInfo(_filePath).Length;
             var newFileSize = new FileInfo(_outputFile).Length;
 
-            _console.WriteLine($"Old file size: {oldFileSize}");
-            _console.WriteLine($"New file size: {newFileSize}");
+            ConsoleLog.WriteLine($"Old file size: {oldFileSize}");
+            ConsoleLog.WriteLine($"New file size: {newFileSize}");
         
             if (newFileSize > oldFileSize)
             {
-                _console.WriteLine("Encoded file larger than original file. Deleting encoded file.");
-                _converterBackend.DeleteFile(_outputFile);
+                ConsoleLog.WriteLine("Encoded file larger than original file. Deleting encoded file.");
+                ConverterBackend.DeleteFile(_outputFile);
             }
             else
             {
-                _converterBackend.DeleteFile(_filePath);
-                _converterBackend.DeleteFile(_encodedProfile8HevcFile);
-                _converterBackend.DeleteFile(_hevcFile);
+                ConverterBackend.DeleteFile(_filePath);
+                ConverterBackend.DeleteFile(_encodedProfile8HevcFile);
+                ConverterBackend.DeleteFile(_hevcFile);
                 
                 //Renames new mkv container to the original file and deletes original file.
                 File.Move(_outputFile, _filePath, true);
 
-                _console.WriteLine($"Conversion complete: {_outputFile}");
+                ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
 
                 _converted = true;
-                return true;
+                return ConverterStatus.Success;
             }
 
-            _console.WriteLine($"Remuxing Non Encoded to MKV: {_remuxCommand}");
-            _converterBackend.RunCommand(_remuxCommand, _filePath);
+            ConsoleLog.WriteLine($"Remuxing Non Encoded to MKV: {_remuxCommand}");
+            ConverterBackend.RunCommand(_remuxCommand, _filePath);
             
-            _converterBackend.DeleteFile(_encodedProfile8HevcFile);
+            ConverterBackend.DeleteFile(_encodedProfile8HevcFile);
             
-            _converterBackend.DeleteFile(_hevcFile);
+            ConverterBackend.DeleteFile(_hevcFile);
             //Renames new mkv container to the original file and deletes original file.
             File.Move(_outputFile, _filePath, true);
 
-            _console.WriteLine($"Conversion complete: {_outputFile}");
+            ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
             
             _converted = true;
-            return true;
+            return ConverterStatus.Success;
         }
         catch (Exception ex)
         {
-            _console.WriteLine($"Error during conversion: {ex.Message}");
+            ConsoleLog.WriteLine($"Error during conversion: {ex.Message}");
             
             _converted = false;
-            return false;
+            return ConverterStatus.Failed;
         }
         finally
         {
             //No matter what, if a fail occurs or if a success, always clear out files generated during script runs.
-            _console.WriteLine("Cleaning up temporary files...");
-            _converterBackend.DeleteFile(_hevcFile);
-            _converterBackend.DeleteFile(_profile8HevcFile);
-            _converterBackend.DeleteFile(_encodedProfile8HevcFile);
-            _converterBackend.DeleteFile(_rpuFile);
-            _converterBackend.DeleteFile(_encodedHevc);
-            _converterBackend.DeleteFile(_outputFile);
+            ConsoleLog.WriteLine("Cleaning up temporary files...");
+            ConverterBackend.DeleteFile(_hevcFile);
+            ConverterBackend.DeleteFile(_profile8HevcFile);
+            ConverterBackend.DeleteFile(_encodedProfile8HevcFile);
+            ConverterBackend.DeleteFile(_rpuFile);
+            ConverterBackend.DeleteFile(_encodedHevc);
+            ConverterBackend.DeleteFile(_outputFile);
         }
     }
     
-    public bool Remux()
+    public ConverterStatus Remux()
     {
         //Runs command sequence
         try
         {
-            _console.WriteLine($"Extracting HEVC stream: {_extractCommand}");
-            _converterBackend.RunCommand(_extractCommand, _filePath);
+            ConsoleLog.WriteLine($"Extracting HEVC stream: {_extractCommand}");
+            ConverterBackend.RunCommand(_extractCommand, _filePath);
 
-            _console.WriteLine($"Converting to Profile 8: {_convertCommand}");
-            _converterBackend.RunCommand(_convertCommand, _filePath);
+            ConsoleLog.WriteLine($"Converting to Profile 8: {_convertCommand}");
+            ConverterBackend.RunCommand(_convertCommand, _filePath);
             
-            _console.WriteLine($"Remuxing to MKV: {_remuxCommand}");
-            _converterBackend.RunCommand(_remuxCommand, _filePath);
-            _converterBackend.DeleteFile(_hevcFile);
+            ConsoleLog.WriteLine($"Remuxing to MKV: {_remuxCommand}");
+            ConverterBackend.RunCommand(_remuxCommand, _filePath);
+            ConverterBackend.DeleteFile(_hevcFile);
             
             //Renames new mkv container to the original file and deletes original file.
             File.Move(_outputFile, _filePath, true);
 
-            _console.WriteLine($"Conversion complete: {_outputFile}");
+            ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
             
             _converted = true;
-            return true;
+            return ConverterStatus.Success;
         }
         catch (Exception ex)
         {
-            _console.WriteLine($"Error during conversion: {ex.Message}");
+            ConsoleLog.WriteLine($"Error during conversion: {ex.Message}");
             
             _converted = false;
-            return false;
+            return ConverterStatus.Failed;
         }
         finally
         {
             //No matter what, if a fail occurs or if a success, always clear out files generated during script runs.
-            _console.WriteLine("Cleaning up temporary files...");
-            _converterBackend.DeleteFile(_hevcFile);
-            _converterBackend.DeleteFile(_profile8HevcFile);
-            _converterBackend.DeleteFile(_outputFile);
+            ConsoleLog.WriteLine("Cleaning up temporary files...");
+            ConverterBackend.DeleteFile(_hevcFile);
+            ConverterBackend.DeleteFile(_profile8HevcFile);
+            ConverterBackend.DeleteFile(_outputFile);
         }
     }
     
-    public bool EncodeHevc()
+    public ConverterStatus EncodeHevc()
     {
         //Runs command sequence
         try
         {
-            _console.WriteLine($"Extracting HEVC stream: {_extractCommand}");
-            _converterBackend.RunCommand(_extractCommand, _filePath);
+            ConsoleLog.WriteLine($"Extracting HEVC stream: {_extractCommand}");
+            ConverterBackend.RunCommand(_extractCommand, _filePath);
             
-            _console.WriteLine($"Extracting RPU: {_extractProfile8RpuCommand}");
-            _converterBackend.RunCommand(_extractProfile8RpuCommand, _filePath);
+            ConsoleLog.WriteLine($"Extracting RPU: {_extractProfile8RpuCommand}");
+            ConverterBackend.RunCommand(_extractProfile8RpuCommand, _filePath);
 
-            _console.WriteLine($"Encoding HEVC: {_reEncodeHevcProfile8Command}");
+            ConsoleLog.WriteLine($"Encoding HEVC: {_reEncodeHevcProfile8Command}");
 
             var failedOutput = string.Empty;
             try
             {
-                failedOutput = _converterBackend.RunCommand(_reEncodeHevcProfile8Command, _filePath, false);
+                failedOutput = ConverterBackend.RunCommand(_reEncodeHevcProfile8Command, _filePath, false);
             }
             catch
             {
-                _console.WriteLine(failedOutput);
+                ConsoleLog.WriteLine(failedOutput);
                 throw;
             }
             
-            _converterBackend.DeleteFile(_profile8HevcFile);
+            ConverterBackend.DeleteFile(_profile8HevcFile);
 
-            _console.WriteLine($"Injecting RPU: {_injectRpu}");
-            _converterBackend.RunCommand(_injectRpu, _filePath);
-            _converterBackend.DeleteFile(_rpuFile);
-            _converterBackend.DeleteFile(_encodedHevc);
+            ConsoleLog.WriteLine($"Injecting RPU: {_injectRpu}");
+            ConverterBackend.RunCommand(_injectRpu, _filePath);
+            ConverterBackend.DeleteFile(_rpuFile);
+            ConverterBackend.DeleteFile(_encodedHevc);
             
-            _console.WriteLine($"Remuxing to MKV: {_remuxCommandEncoded}");
-            _converterBackend.RunCommand(_remuxCommandEncoded, _filePath);
-            _converterBackend.DeleteFile(_encodedProfile8HevcFile);
-            _converterBackend.DeleteFile(_hevcFile);
+            ConsoleLog.WriteLine($"Remuxing to MKV: {_remuxCommandEncoded}");
+            ConverterBackend.RunCommand(_remuxCommandEncoded, _filePath);
+            ConverterBackend.DeleteFile(_encodedProfile8HevcFile);
+            ConverterBackend.DeleteFile(_hevcFile);
             
             var oldFileSize = new FileInfo(_filePath).Length;
             var newFileSize = new FileInfo(_outputFile).Length;
 
-            _console.WriteLine($"Old file size: {oldFileSize}");
-            _console.WriteLine($"New file size: {newFileSize}");
+            ConsoleLog.WriteLine($"Old file size: {oldFileSize}");
+            ConsoleLog.WriteLine($"New file size: {newFileSize}");
             
             if (newFileSize > oldFileSize)
             {
-                _console.WriteLine("Encoded file larger than original file. Deleting encoded file.");
-                _converterBackend.DeleteFile(_outputFile);
+                ConsoleLog.WriteLine("Encoded file larger than original file. Deleting encoded file.");
+                ConverterBackend.DeleteFile(_outputFile);
 
                 _failedReason = "Output file larger than input.";
                 _converted = false;
-                return false;
+                return ConverterStatus.Failed;
             }
             else
             {
                 //Renames new mkv container to the original file and deletes original file.
                 File.Move(_outputFile, _filePath, true);
 
-                _console.WriteLine($"Conversion complete: {_outputFile}");
+                ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
             }
 
             _converted = true;
-            return true;
+            return ConverterStatus.Success;
         }
         catch (Exception ex)
         {
-            _console.WriteLine($"Error during conversion: {ex.Message}");
+            ConsoleLog.WriteLine($"Error during conversion: {ex.Message}");
 
             _converted = false;
-            return false;
+            return ConverterStatus.Failed;
         }
         finally
         {
             //No matter what, if a fail occurs or if a success, always clear out files generated during script runs.
-            _console.WriteLine("Cleaning up temporary files...");
-            _converterBackend.DeleteFile(_hevcFile);
-            _converterBackend.DeleteFile(_profile8HevcFile);
-            _converterBackend.DeleteFile(_encodedProfile8HevcFile);
-            _converterBackend.DeleteFile(_rpuFile);
-            _converterBackend.DeleteFile(_encodedHevc);
-            _converterBackend.DeleteFile(_outputFile);
+            ConsoleLog.WriteLine("Cleaning up temporary files...");
+            ConverterBackend.DeleteFile(_hevcFile);
+            ConverterBackend.DeleteFile(_profile8HevcFile);
+            ConverterBackend.DeleteFile(_encodedProfile8HevcFile);
+            ConverterBackend.DeleteFile(_rpuFile);
+            ConverterBackend.DeleteFile(_encodedHevc);
+            ConverterBackend.DeleteFile(_outputFile);
         }
     }
     
-    public bool EncodeAv1()
+    public ConverterStatus EncodeAv1()
     {
         //Runs command sequence
         try
         {
-            _console.WriteLine($"Re Encoding {_videoName} To AV1: {_encodeAv1Command}");
-            _converterBackend.RunCommand(_encodeAv1Command, _filePath);
+            ConsoleLog.WriteLine($"Re Encoding {_videoName} To AV1: {_encodeAv1Command}");
+            ConverterBackend.RunCommand(_encodeAv1Command, _filePath);
 
             var oldFileSize = new FileInfo(_filePath).Length;
             var newFileSize = new FileInfo(_outputFile).Length;
 
-            _console.WriteLine($"Old file size: {oldFileSize}");
-            _console.WriteLine($"New file size: {newFileSize}");
+            ConsoleLog.WriteLine($"Old file size: {oldFileSize}");
+            ConsoleLog.WriteLine($"New file size: {newFileSize}");
 
             if (newFileSize > oldFileSize)
             {
-                _console.WriteLine("Encoded file larger than original file. Deleting encoded file.");
-                _converterBackend.DeleteFile(_outputFile);
+                ConsoleLog.WriteLine("Encoded file larger than original file. Deleting encoded file.");
+                ConverterBackend.DeleteFile(_outputFile);
 
                 _failedReason = "Output file larger than input.";
                 _converted = false;
-                return false;
+                return ConverterStatus.Failed;
             }
             else
             {
                 //Renames new mkv container to the original file and deletes original file.
                 File.Move(_outputFile, _filePath, true);
 
-                _console.WriteLine($"Conversion complete: {_outputFile}");
+                ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
             }
 
             _converted = true;
-            return true;
+            return ConverterStatus.Success;
         }
         catch (Exception ex)
         {
-            _console.WriteLine($"Error during conversion: {ex.Message}");
+            ConsoleLog.WriteLine($"Error during conversion: {ex.Message}");
 
             _converted = false;
-            return false;
+            return ConverterStatus.Failed;
         }
         finally
         {
-            _converterBackend.DeleteFile(_outputFile);
+            ConverterBackend.DeleteFile(_outputFile);
         }
     }
 
@@ -389,22 +386,22 @@ public class FileConverter
         var directory = Path.GetDirectoryName(_filePath)!;
         var customMetadataFile = Path.Combine(directory, $"{_videoName}Metadata.mkv");
 
-        customMetadataFile = _converterBackend.FileFormatToCommand(customMetadataFile);
+        customMetadataFile = ConverterBackend.FileFormatToCommand(customMetadataFile);
         var insertMetadataCommand = $"ffmpeg -i '{_commandFilePath}' -map 0 -c:v copy -c:a copy -c:s copy -metadata LIBRARY_OPTIMIZER_APP='Converted={_converted}. Reason={_failedReason}' '{customMetadataFile}'";
-        customMetadataFile = _converterBackend.FileRemoveFormat(customMetadataFile);
+        customMetadataFile = ConverterBackend.FileRemoveFormat(customMetadataFile);
         
         var failOutput = string.Empty;
         try
         {
-            _console.WriteLine($"Inserting metadata 'LIBRARY_OPTIMIZER_APP=Converted={_converted}. Reason={_failedReason}' into {_filePath}");
-            failOutput = _converterBackend.RunCommand(insertMetadataCommand, _filePath, false);
+            ConsoleLog.WriteLine($"Inserting metadata 'LIBRARY_OPTIMIZER_APP=Converted={_converted}. Reason={_failedReason}' into {_filePath}");
+            failOutput = ConverterBackend.RunCommand(insertMetadataCommand, _filePath, false);
             
             File.Move(customMetadataFile, _filePath, true);
         }
         catch
         {
-            _console.WriteLine($"Metadata fail: {failOutput}");
-            _console.WriteLine("Appending metadata failed. Continuing...");
+            ConsoleLog.WriteLine($"Metadata fail: {failOutput}");
+            ConsoleLog.WriteLine("Appending metadata failed. Continuing...");
         }
     }
 }
