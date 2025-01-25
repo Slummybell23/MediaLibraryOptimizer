@@ -13,4 +13,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build the Docker image
-      run: docker build --file LibraryOptimizer/Dockerfile --tag media-library-optimizer:$(date +%s) LibraryOptimizer/
+      run: docker build --file LibraryOptimizer/Dockerfile --tag media-library-optimizer:$(date +%H) LibraryOptimizer/
+    - name: Push the Docker image
+      run: docker push media-library-optimizer:$(date +%H)
