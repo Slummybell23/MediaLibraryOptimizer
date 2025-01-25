@@ -108,8 +108,5 @@ ENV REMUX=N
 ENV STARTTIME=5
 ENV NVIDIA_DRIVER_CAPABILITIES=all
 
-# Verify FFmpeg Installation (Optional)
-RUN ffmpeg -version
-
 # Run the App
 ENTRYPOINT ["dotnet", "LibraryOptimizer.dll"]
