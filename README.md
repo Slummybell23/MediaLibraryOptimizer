@@ -23,12 +23,6 @@ The Optimizer will shrink your servers storage while retaining very high quality
 * Set the extra parameters to `--runtime=nvidia`
 * Run container and modify the generated setup file from below.
 
-### Requirements
-Only supports hardware accelerated Encoding. If you intend to use the Optimizer for encoding, you will need a Nvidia or Intel GPU capable of AV1 Encoding.
-<br>
-Intended to run in a Docker Environment.
-
-## Functionality
 ### Setup File
 When you first run the Optimizer, it will generate a Config.yml file inside of it's config folder that you specified.
 The file will look similar to this:
@@ -51,6 +45,12 @@ libraryPaths:
 ```
 `retryFailed` if set to true will allow the program to process files previously marked as failed.
 
+### Requirements
+Only supports hardware accelerated Encoding. If you intend to use the Optimizer for encoding, you will need a Nvidia or Intel GPU capable of AV1 Encoding.
+<br>
+Intended to run in a Docker Environment.
+
+## Functionality
 Before any of these proccesses are ran, the file will get moved to the `/tmp` location.
 <br>
 For all encodes, the program will check if the output generated is larger than the input and discard the larger output and mark the encode as failed.
