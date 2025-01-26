@@ -59,6 +59,8 @@ public class ConverterBackend
             {
                 return false;
             }
+            
+            throw;
         }
 
         if (metadataOrError.Contains("Converted=True.")
