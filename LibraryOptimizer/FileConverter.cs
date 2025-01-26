@@ -40,10 +40,10 @@ public class FileConverter
         _reEncodeHevcProfile8Command = $"ffmpeg -i '{_hevcFile}' -c:v hevc_nvenc -preset p7 -cq 3 -c:a copy '{_encodedHevc}'";
             
         //Nvidia GPU Encoding
-        _encodeAv1Command = $"ffmpeg -i '{filePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 25 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+        //_encodeAv1Command = $"ffmpeg -i '{filePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 25 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
         
         //Intel Arc Encoding
-        //EncodeAV1Command = $"ffmpeg -i '{filePath}' -map 0 -c:v av1_qsv -global_quality 20 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{OutputFile}'";
+        //_encodeAv1Command = $"ffmpeg -i '{filePath}' -map 0 -c:v av1_qsv -global_quality 20 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
         
         //CPU Software Encoding
         //EncodeAV1Command = $"ffmpeg -i '{filePath}' -c:v libsvtav1 -preset 6 -crf 15 -c:s copy -c:a copy -map_metadata 0 -map_chapters 0 '{OutputFile}'";
@@ -71,19 +71,40 @@ public class FileConverter
     }
     
     //Constructor Chaining
-    public FileConverter(string filePath, double bitRate) : this(filePath)
+    public FileConverter(string filePath, double bitRate, bool isNvidia) : this(filePath)
     {
-        if (bitRate >= 12)
+        if (isNvidia)
         {
-            _encodeAv1Command = $"ffmpeg -i '{filePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 25 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+            //NVIDIA NVENC
+            if (bitRate >= 12)
+            {
+                _encodeAv1Command = $"ffmpeg -i '{filePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 25 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+            }
+            else if (bitRate <= 12 && bitRate >= 7)
+            {
+                _encodeAv1Command = $"ffmpeg -i '{filePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 29 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+            }
+            else if (bitRate <= 7)
+            {
+                _encodeAv1Command = $"ffmpeg -i '{filePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 32 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+            }
         }
-        else if (bitRate <= 11 && bitRate >= 7)
+
+        if (!isNvidia)
         {
-            _encodeAv1Command = $"ffmpeg -i '{filePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 29 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
-        }
-        else if (bitRate <= 6)
-        {
-            _encodeAv1Command = $"ffmpeg -i '{filePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 32 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+            //INTEL ARC
+            if (bitRate >= 12)
+            {
+                _encodeAv1Command = $"ffmpeg -i '{filePath}' -map 0 -c:v av1_qsv -global_quality 20 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+            }
+            else if (bitRate <= 12 && bitRate >= 7)
+            {
+                _encodeAv1Command = $"ffmpeg -i '{filePath}' -map 0 -c:v av1_qsv -global_quality 22 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+            }
+            else if (bitRate <= 7)
+            {
+                _encodeAv1Command = $"ffmpeg -i '{filePath}' -map 0 -c:v av1_qsv -global_quality 24 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+            }
         }
     }
 

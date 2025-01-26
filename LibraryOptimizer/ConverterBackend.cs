@@ -258,9 +258,9 @@ public class ConverterBackend
         return converted;
     }
     
-    public static ConverterStatus EncodeAv1(string filePath, double bitRate)
+    public static ConverterStatus EncodeAv1(string filePath, double bitRate, bool isNvidia)
     {
-        var fileConverter = new FileConverter(filePath, bitRate);
+        var fileConverter = new FileConverter(filePath, bitRate, isNvidia);
         var converted = fileConverter.EncodeAv1();
         fileConverter.AppendMetadata();
         

@@ -9,4 +9,5 @@ public class LibraryOptimzerYaml
     public bool EncodeAv1 = false;
     public bool RemuxDolbyVision = false;
     public bool RetryFailed = false;
+    public bool IsNvidia = false;
 }

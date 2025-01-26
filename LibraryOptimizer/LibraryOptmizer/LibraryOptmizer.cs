@@ -9,7 +9,7 @@ public class LibraryOptmizer
 {
     //Creates objects necessary for logging and converting files.
     private string _dataFolder = "/data";
-    private string _tempFolder = "/tmp";
+    private string _tempFolder = "/incomplete";
     private bool _retryFailed = false;
     private string _configDir;
     
@@ -19,6 +19,7 @@ public class LibraryOptmizer
     public bool EncodeHevc = false;
     public bool EncodeAv1 = false;
     public bool RemuxDolbyVision = false;
+    public bool isNvida = false;
     
     public void SetupWrapperVars()
     {
@@ -56,6 +57,7 @@ public class LibraryOptmizer
             CheckAll = yamlObj.CheckAll;
             StartHour = yamlObj.StartHour;
             _retryFailed = yamlObj.RetryFailed;
+            isNvida = yamlObj.IsNvidia;
 
             foreach (var library in yamlObj.LibraryPaths)
             {
@@ -144,7 +146,7 @@ public class LibraryOptmizer
                             ConsoleLog.WriteLine("Copying file for AV1 Encode...");
                             File.Copy(file, outputPathFile);
 
-                            converted = ConverterBackend.EncodeAv1(commandOutputFile, startBitRate);
+                            converted = ConverterBackend.EncodeAv1(commandOutputFile, startBitRate, isNvida);
 
                             encodeCheckCommand = $"ffprobe -i '{commandOutputFile}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
                             var bitRateOutput = ConverterBackend.RunCommand(encodeCheckCommand, commandOutputFile).Split().Last();
