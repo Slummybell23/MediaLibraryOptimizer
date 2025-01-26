@@ -1,0 +1,25 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERUSER }}
+        password: ${{ secrets.DOCKERPASS }}
+          
+    - name: Build the Docker image
+      run: docker build --file LibraryOptimizer/Dockerfile --tag slummybell/media-library-optimizer:$(date +%H) LibraryOptimizer/
+    - name: Push the Docker image
+      run: docker push slummybell/media-library-optimizer:$(date +%H)

@@ -23,12 +23,7 @@ The Optimizer will shrink your servers storage while retaining very high quality
 * Set the extra parameters to `--runtime=nvidia`
 * Run container and modify the generated setup file from below.
 
-### Requirements
-Only supports hardware accelerated Encoding. If you intend to use the Optimizer for encoding, you will need a Nvidia or Intel GPU capable of AV1 Encoding.
-Intended to run in a Docker Environment.
-
-### Functionality
-#### Setup File
+### Setup File
 When you first run the Optimizer, it will generate a Config.yml file inside of it's config folder that you specified.
 The file will look similar to this:
 ```Config.yml
@@ -50,10 +45,16 @@ libraryPaths:
 ```
 `retryFailed` if set to true will allow the program to process files previously marked as failed.
 
+### Requirements
+Only supports hardware accelerated Encoding. If you intend to use the Optimizer for encoding, you will need a Nvidia or Intel GPU capable of AV1 Encoding.
+<br>
+Intended to run in a Docker Environment.
+
+## Functionality
 Before any of these proccesses are ran, the file will get moved to the `/tmp` location.
 <br>
 For all encodes, the program will check if the output generated is larger than the input and discard the larger output and mark the encode as failed.
-#### AV1 Encode:
+### AV1 Encode:
 *Note: AV1_NVENC*
 <br>
 If the file is Non Dolby Vision and is not in AV1:
@@ -65,7 +66,7 @@ The `cq` value of 25 is great for most content. However, files with low bitrates
 * Greater than 11mbps: `cq 25`
 * Between 11mbps and 7mbps: `cq 29`
 * Less than 7mbps: `cq 32`
-#### HEVC Encode:
+### HEVC Encode:
 *Note: HEVC_NVENC*
 <br>
 If the file is Dolby Vision 8 or 5:
@@ -80,7 +81,7 @@ However, running that command alone will strip the Dolby Vision metadata.
 4. Injects the RPU metadata into `encoded.hevc`.
 5. Remuxes `encoded.hevc` into the input `.mkv` retaining all metadata and other streams and generating `output.mkv`
 
-#### Dolby Vision Remux:
+### Dolby Vision Remux:
 If the file is Dolby Vision 7:
 
 1. Extracts HEVC Stream to a separate `.hevc` file.
@@ -88,9 +89,9 @@ If the file is Dolby Vision 7:
 3. Converts the Dolby Vision Profile 7 `.rpu` to a `profile8.rpu` file.
 4. Injects the `profile8.rpu` into `.hevc`.
 5. Remuxes `.hevc` into the input `.mkv` retaining all metadata and other streams and generating `output.mkv`
-#### Miscelanious Functionality:
+### Miscelanious Functionality:
 
-##### Metadata Generation
+#### Metadata Generation
 After a file is proccessed, weather failed or successufully, the program will add a small bit of Metadata to the container:
 <br>
 `LIBRARY_OPTIMIZER_APP=Converted={conversion status true or false}. Reason={Reason for conversion status}`
