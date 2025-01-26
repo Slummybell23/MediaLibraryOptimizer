@@ -272,11 +272,12 @@ public class LibraryOptmizer
                     }
 
                     if (converted != ConverterStatus.NotConverted)
-                    {
+                    {                            
+                        ConsoleLog.WriteLine("Processing done. Moving output file to library.");
+
                         if (converted == ConverterStatus.Success)
                         {
                             convertedFiles.Add(file);
-                            ConsoleLog.WriteLine("Processing done. Moving output file to library.");
                         }
                         else
                         {
