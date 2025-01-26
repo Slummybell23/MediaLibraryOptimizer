@@ -99,11 +99,11 @@ public class FileConverter
             }
             else if (bitRate <= 12 && bitRate >= 7)
             {
-                _encodeAv1Command = $"ffmpeg -i '{filePath}' -map 0 -c:v av1_qsv -global_quality 22 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -i '{filePath}' -map 0 -c:v av1_qsv -global_quality 21 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
             else if (bitRate <= 7)
             {
-                _encodeAv1Command = $"ffmpeg -i '{filePath}' -map 0 -c:v av1_qsv -global_quality 24 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -i '{filePath}' -map 0 -c:v av1_qsv -global_quality 23 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
         }
     }
