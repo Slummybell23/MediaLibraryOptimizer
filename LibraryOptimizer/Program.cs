@@ -9,7 +9,7 @@ public abstract class Program
    {
         var wrapper = new LibraryOptmizer.LibraryOptmizer();
 
-        wrapper.SetupWrapperVars();
+        wrapper.SetupOptimizer();
 
         if (Debugger.IsAttached)
         {

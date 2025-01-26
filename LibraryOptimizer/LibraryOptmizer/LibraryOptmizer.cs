@@ -9,7 +9,7 @@ public class LibraryOptmizer
 {
     //Creates objects necessary for logging and converting files.
     private string _dataFolder = "/data";
-    private string _tempFolder = "/incomplete";
+    private string _incompleteFolder = "/incomplete";
     private bool _retryFailed;
     private string _configDir;
     private bool _isNvida;
@@ -21,12 +21,12 @@ public class LibraryOptmizer
     public bool EncodeAv1;
     public bool RemuxDolbyVision;
     
-    public void SetupWrapperVars()
+    public void SetupOptimizer()
     {
         if (OperatingSystem.IsWindows())
         {
             _configDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
-            _tempFolder = "Y:\\";
+            _incompleteFolder = "Y:\\";
         }
         else if (OperatingSystem.IsLinux())
         {
@@ -82,8 +82,13 @@ public class LibraryOptmizer
             BuildConfigFile(libraryOptimzerYaml, configFile);
         }
         
-        _tempFolder = Path.Join(_tempFolder, "libraryOptimizerIncomplete");
-        Directory.CreateDirectory(_tempFolder);
+        _incompleteFolder = Path.Join(_incompleteFolder, "libraryOptimizerIncomplete");
+        
+        //Clean up old files
+        if(Directory.Exists(_incompleteFolder))
+            Directory.Delete(_incompleteFolder, true);
+        
+        Directory.CreateDirectory(_incompleteFolder);
     }
 
     private void BuildConfigFile(LibraryOptimzerYaml libraryOptimzerYaml, string configFile)
@@ -125,7 +130,7 @@ public class LibraryOptmizer
                     var commandFile = ConverterBackend.FileFormatToCommand(file);
                 
                     var fileName = Path.GetFileName(file);
-                    var outputPathFile = Path.Combine(_tempFolder, $"{fileName}");
+                    var outputPathFile = Path.Combine(_incompleteFolder, $"{fileName}");
                     var commandOutputFile = ConverterBackend.FileFormatToCommand(outputPathFile);
 
                     ConsoleLog.ResetLogText();
