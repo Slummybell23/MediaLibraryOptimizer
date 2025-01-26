@@ -121,13 +121,21 @@ public class FileConverter
 
     //HEVC
     public FileConverter(string inputFilePath, bool isNvidia) : this(inputFilePath)
-    {
+    { 
+        var directory = Path.GetDirectoryName(inputFilePath)!;
+        _hevcFile = Path.Combine(directory, $"{_videoName}hevc.hevc");
+        _encodedProfile8HevcFile = Path.Combine(directory, $"{_videoName}profile8encodedhevc.hevc");
+
         if(isNvidia)
             //NVIDIA NVENC
             _reEncodeHevcProfile8Command = $"ffmpeg -i '{_hevcFile}' -c:v hevc_nvenc -preset p7 -cq 3 -c:a copy '{_encodedHevc}'";
         else
             //INTEL ARC
             _reEncodeHevcProfile8Command = $"ffmpeg -i '{_hevcFile}' -c:v hevc_qsv -preset 1 -global_quality 3 -c:a copy '{_encodedHevc}'";
+        
+        directory = Path.GetDirectoryName(_inputFilePath)!;
+        _encodedHevc = Path.Combine(directory, $"{_videoName}encodedHevc.hevc");
+        _hevcFile = Path.Combine(directory, $"{_videoName}hevc.hevc");
     }
 
     #endregion

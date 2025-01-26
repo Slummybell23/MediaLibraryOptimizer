@@ -13,7 +13,7 @@ public class LibraryOptmizer
     private string _incompleteFolder = "/incomplete";
     private bool _retryFailed;
     private string _configDir;
-    private bool _isNvida;
+    private bool _isNvidia;
     private bool _forceStart = false;
 
     public List<string> Libraries = new List<string>();
@@ -65,7 +65,7 @@ public class LibraryOptmizer
                 CheckAll = yamlObj.CheckAll;
                 StartHour = yamlObj.StartHour;
                 _retryFailed = yamlObj.RetryFailed;
-                _isNvida = yamlObj.IsNvidia;
+                _isNvidia = yamlObj.IsNvidia;
                 
                 BuildConfigFile(yamlObj, configFile);
             }
@@ -176,7 +176,7 @@ public class LibraryOptmizer
                             ConsoleLog.WriteLine("Copying file for AV1 Encode...");
                             File.Copy(file, outputPathFile);
 
-                            converted = ConverterBackend.EncodeAv1(commandOutputFile, startBitRate, _isNvida);
+                            converted = ConverterBackend.EncodeAv1(commandOutputFile, startBitRate, _isNvidia);
 
                             encodeCheckCommand = $"ffprobe -i '{commandOutputFile}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
                             var bitRateOutput = ConverterBackend.RunCommand(encodeCheckCommand, commandOutputFile).Split().Last();
@@ -207,7 +207,7 @@ public class LibraryOptmizer
                 
                             ConsoleLog.WriteLine($"Dolby Vision Profile 7 detected in: {file}");
                             
-                            converted = ConverterBackend.RemuxAndEncodeHevc(commandOutputFile, _isNvida);
+                            converted = ConverterBackend.RemuxAndEncodeHevc(commandOutputFile, _isNvidia);
                         
                             encodeCheckCommand = $"ffprobe -i '{commandOutputFile}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
                             var bitRateOutput = ConverterBackend.RunCommand(encodeCheckCommand, outputPathFile).Split().Last();
@@ -224,7 +224,7 @@ public class LibraryOptmizer
                             ConsoleLog.WriteLine("Copying file for HEVC Encode...");
                             File.Copy(file, outputPathFile);
                 
-                            converted = ConverterBackend.EncodeHevc(commandOutputFile, _isNvida);
+                            converted = ConverterBackend.EncodeHevc(commandOutputFile, _isNvidia);
                         
                             encodeCheckCommand = $"ffprobe -i '{commandOutputFile}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
                             var bitRateOutput = ConverterBackend.RunCommand(encodeCheckCommand, outputPathFile).Split().Last();
