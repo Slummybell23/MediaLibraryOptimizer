@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 
 namespace LibraryOptimizer;
 
@@ -21,10 +20,8 @@ public class FileConverter
         _encodedProfile8HevcFile = Path.Combine(directory, $"{_videoName}profile8encodedhevc.hevc");
         
         _commandOutputFile = Path.Combine(Path.GetDirectoryName(filePath)!, "converted_" + Path.GetFileName(filePath));
-        //===================================================
         
-        //Build commands to execute in sequence
-        
+        //======================Dolby Vision 7 -> 8 Remuxing=============================
         //Copies the HEVC stream of the mkv container to a seperate hevc file.
         //Sets metadata level to 150 for easier proccessing on slower decoders in case hevc is level 153.
         //Difference is negligible unless you're doing 8k resolution files.
@@ -36,25 +33,13 @@ public class FileConverter
         //Extracting rpu file which contains the Dolby Vision metadata. Otherwise, FFmpeg loses Dolby Vision metadata.
         _extractProfile8RpuCommand = $"dovi_tool extract-rpu -i '{_hevcFile}' -o '{_rpuFile}'";
         
-        //Nvidia GPU Encoding
-        _reEncodeHevcProfile8Command = $"ffmpeg -i '{_hevcFile}' -c:v hevc_nvenc -preset p7 -cq 3 -c:a copy '{_encodedHevc}'";
-            
-        //Nvidia GPU Encoding
-        //_encodeAv1Command = $"ffmpeg -i '{filePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 25 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
-        
-        //Intel Arc Encoding
-        //_encodeAv1Command = $"ffmpeg -i '{filePath}' -map 0 -c:v av1_qsv -global_quality 20 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
-        
-        //CPU Software Encoding
-        //EncodeAV1Command = $"ffmpeg -i '{filePath}' -c:v libsvtav1 -preset 6 -crf 15 -c:s copy -c:a copy -map_metadata 0 -map_chapters 0 '{OutputFile}'";
-        
         //After encoding, inject the rpu file back into the HEVC so Dolby Vision metadata is retained.
         _injectRpu = $"dovi_tool inject-rpu -i '{_encodedHevc}' -r '{_rpuFile}' -o '{_encodedProfile8HevcFile}'";
         
         //Remuxes the hevc file into new mkv container, overriding the original video stream with new encoded and/or converted hevc file.
         _remuxCommandEncoded = $"mkvmerge -o '{_commandOutputFile}' -D '{filePath}' '{_encodedProfile8HevcFile}'";
         _remuxCommand = $"mkvmerge -o '{_commandOutputFile}' -D '{filePath}' '{_profile8HevcFile}'";
-        //=====================================
+        //======================Dolby Vision 7 -> 8 Remuxing=============================
         
         //Remove formatting for deleting.
         _filePath = ConverterBackend.FileRemoveFormat(filePath);
@@ -89,8 +74,7 @@ public class FileConverter
                 _encodeAv1Command = $"ffmpeg -i '{filePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 32 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
         }
-
-        if (!isNvidia)
+        else
         {
             //INTEL ARC
             if (bitRate >= 12)
@@ -108,7 +92,16 @@ public class FileConverter
         }
     }
 
-    private ConverterBackend ConverterBackend;
+    public FileConverter(string filePath, bool isNvidia) : this(filePath)
+    {
+        if(isNvidia)
+            //NVIDIA NVENC
+            _reEncodeHevcProfile8Command = $"ffmpeg -i '{_hevcFile}' -c:v hevc_nvenc -preset p7 -cq 3 -c:a copy '{_encodedHevc}'";
+        else
+            //INTEL ARC
+            _reEncodeHevcProfile8Command = $"ffmpeg -i '{_hevcFile}' -c:v hevc_qsv -preset 1 -global_quality 3 -c:a copy '{_encodedHevc}'";
+    }
+    
     private string _filePath;
     private string _commandFilePath;
 
@@ -132,7 +125,7 @@ public class FileConverter
     private string _remuxCommandEncoded;
     private string _remuxCommand;
 
-    private bool? _converted = null;
+    private bool _converted;
     private string _failedReason = string.Empty;
 
     public ConverterStatus RemuxAndEncodeHevc()
@@ -173,11 +166,11 @@ public class FileConverter
             ConsoleLog.WriteLine($"Remuxing Encoded to MKV: {_remuxCommandEncoded}");
             ConverterBackend.RunCommand(_remuxCommandEncoded, _filePath);
             
-            var oldFileSize = new FileInfo(_filePath).Length;
-            var newFileSize = new FileInfo(_outputFile).Length;
+            var oldFileSize = new FileInfo(_filePath).Length/1000000;
+            var newFileSize = new FileInfo(_outputFile).Length/1000000;
 
-            ConsoleLog.WriteLine($"Old file size: {oldFileSize}");
-            ConsoleLog.WriteLine($"New file size: {newFileSize}");
+            ConsoleLog.WriteLine($"Old file size: {oldFileSize} mb");
+            ConsoleLog.WriteLine($"New file size: {newFileSize} mb");
         
             if (newFileSize > oldFileSize)
             {
@@ -309,11 +302,11 @@ public class FileConverter
             ConverterBackend.DeleteFile(_encodedProfile8HevcFile);
             ConverterBackend.DeleteFile(_hevcFile);
             
-            var oldFileSize = new FileInfo(_filePath).Length;
-            var newFileSize = new FileInfo(_outputFile).Length;
+            var oldFileSize = new FileInfo(_filePath).Length/1000000;
+            var newFileSize = new FileInfo(_outputFile).Length/1000000;
 
-            ConsoleLog.WriteLine($"Old file size: {oldFileSize}");
-            ConsoleLog.WriteLine($"New file size: {newFileSize}");
+            ConsoleLog.WriteLine($"Old file size: {oldFileSize} mb");
+            ConsoleLog.WriteLine($"New file size: {newFileSize} mb");
             
             if (newFileSize > oldFileSize)
             {
@@ -363,11 +356,11 @@ public class FileConverter
             ConsoleLog.WriteLine($"Re Encoding {_videoName} To AV1: {_encodeAv1Command}");
             ConverterBackend.RunCommand(_encodeAv1Command, _filePath);
 
-            var oldFileSize = new FileInfo(_filePath).Length;
-            var newFileSize = new FileInfo(_outputFile).Length;
+            var oldFileSize = new FileInfo(_filePath).Length/1000000;
+            var newFileSize = new FileInfo(_outputFile).Length/1000000;
 
-            ConsoleLog.WriteLine($"Old file size: {oldFileSize}");
-            ConsoleLog.WriteLine($"New file size: {newFileSize}");
+            ConsoleLog.WriteLine($"Old file size: {oldFileSize} mb");
+            ConsoleLog.WriteLine($"New file size: {newFileSize} mb");
 
             if (newFileSize > oldFileSize)
             {

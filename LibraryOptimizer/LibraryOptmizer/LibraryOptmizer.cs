@@ -10,16 +10,16 @@ public class LibraryOptmizer
     //Creates objects necessary for logging and converting files.
     private string _dataFolder = "/data";
     private string _tempFolder = "/incomplete";
-    private bool _retryFailed = false;
+    private bool _retryFailed;
     private string _configDir;
-    
+    private bool _isNvida;
+
     public List<string> Libraries = new List<string>();
-    public string? CheckAll = null;
+    public string CheckAll = "y";
     public int StartHour = DateTime.Now.Hour;
-    public bool EncodeHevc = false;
-    public bool EncodeAv1 = false;
-    public bool RemuxDolbyVision = false;
-    public bool isNvida = false;
+    public bool EncodeHevc;
+    public bool EncodeAv1;
+    public bool RemuxDolbyVision;
     
     public void SetupWrapperVars()
     {
@@ -47,37 +47,53 @@ public class LibraryOptmizer
             var deserializer = new DeserializerBuilder()
                 .WithNamingConvention(CamelCaseNamingConvention.Instance)
                 .Build();
-            
-            //yaml contains a string containing your YAML
-            var yamlObj = deserializer.Deserialize<LibraryOptimzerYaml>(reader);
-
-            RemuxDolbyVision = yamlObj.RemuxDolbyVision;
-            EncodeHevc = yamlObj.EncodeHevc;
-            EncodeAv1 = yamlObj.EncodeAv1;
-            CheckAll = yamlObj.CheckAll;
-            StartHour = yamlObj.StartHour;
-            _retryFailed = yamlObj.RetryFailed;
-            isNvida = yamlObj.IsNvidia;
-
-            foreach (var library in yamlObj.LibraryPaths)
+            try
             {
-                Libraries.Add(_dataFolder + library);
+                //yaml contains a string containing your YAML
+                var yamlObj = deserializer.Deserialize<LibraryOptimzerYaml>(reader);
+
+                foreach (var library in yamlObj.LibraryPaths)
+                {
+                    Libraries.Add(_dataFolder + library);
+                }
+
+                RemuxDolbyVision = yamlObj.RemuxDolbyVision;
+                EncodeHevc = yamlObj.EncodeHevc;
+                EncodeAv1 = yamlObj.EncodeAv1;
+                CheckAll = yamlObj.CheckAll;
+                StartHour = yamlObj.StartHour;
+                _retryFailed = yamlObj.RetryFailed;
+                _isNvida = yamlObj.IsNvidia;
+            }
+            catch (Exception e)
+            {
+                ConsoleLog.WriteLine(e.Message);
+                ConsoleLog.WriteLine("Re Writing Config File");
+                
+                var libraryOptimizerYaml = new LibraryOptimzerYaml();
+                libraryOptimizerYaml.LibraryPaths = Libraries;
+                
+                BuildConfigFile(libraryOptimizerYaml, configFile);
             }
         }
         else
         {
-            var wrapperJobject = new LibraryOptimzerYaml();
-
-            var serializer = new SerializerBuilder()
-                .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                .Build();
-            var configStr = serializer.Serialize(wrapperJobject);
-            
-            File.WriteAllText(configFile, configStr);
+            var libraryOptimzerYaml = new LibraryOptimzerYaml();
+            BuildConfigFile(libraryOptimzerYaml, configFile);
         }
         
         _tempFolder = Path.Join(_tempFolder, "libraryOptimizerIncomplete");
         Directory.CreateDirectory(_tempFolder);
+    }
+
+    private void BuildConfigFile(LibraryOptimzerYaml libraryOptimzerYaml, string configFile)
+    {
+        var serializer = new SerializerBuilder()
+            .WithNamingConvention(CamelCaseNamingConvention.Instance)
+            .Build();
+        var configStr = serializer.Serialize(libraryOptimzerYaml);
+            
+        File.WriteAllText(configFile, configStr);
     }
 
     public void ProcessLibrary()
@@ -146,7 +162,7 @@ public class LibraryOptmizer
                             ConsoleLog.WriteLine("Copying file for AV1 Encode...");
                             File.Copy(file, outputPathFile);
 
-                            converted = ConverterBackend.EncodeAv1(commandOutputFile, startBitRate, isNvida);
+                            converted = ConverterBackend.EncodeAv1(commandOutputFile, startBitRate, _isNvida);
 
                             encodeCheckCommand = $"ffprobe -i '{commandOutputFile}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
                             var bitRateOutput = ConverterBackend.RunCommand(encodeCheckCommand, commandOutputFile).Split().Last();
@@ -177,7 +193,7 @@ public class LibraryOptmizer
                 
                             ConsoleLog.WriteLine($"Dolby Vision Profile 7 detected in: {file}");
                             
-                            converted = ConverterBackend.RemuxAndEncodeHevc(commandOutputFile);
+                            converted = ConverterBackend.RemuxAndEncodeHevc(commandOutputFile, _isNvida);
                         
                             encodeCheckCommand = $"ffprobe -i '{commandOutputFile}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
                             var bitRateOutput = ConverterBackend.RunCommand(encodeCheckCommand, outputPathFile).Split().Last();
@@ -194,7 +210,7 @@ public class LibraryOptmizer
                             ConsoleLog.WriteLine("Copying file for HEVC Encode...");
                             File.Copy(file, outputPathFile);
                 
-                            converted = ConverterBackend.EncodeHevc(commandOutputFile);
+                            converted = ConverterBackend.EncodeHevc(commandOutputFile, _isNvida);
                         
                             encodeCheckCommand = $"ffprobe -i '{commandOutputFile}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
                             var bitRateOutput = ConverterBackend.RunCommand(encodeCheckCommand, outputPathFile).Split().Last();

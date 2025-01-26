@@ -1,13 +1,11 @@
-using System.Collections;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 namespace LibraryOptimizer;
 
 public class ConverterBackend
 {
     //Builds list of files from input directories.
-    public static IEnumerable<FileInfo> BuildFilesList(List<string> libraries, string? checkAll)
+    public static IEnumerable<FileInfo> BuildFilesList(List<string> libraries, string checkAll)
     {
         ConsoleLog.WriteLine("Grabbing all files. Please wait...\nCan take a few minutes for large directories...");
         var allFiles = new List<FileInfo>();
@@ -30,7 +28,7 @@ public class ConverterBackend
         return recentInDir;
     }
     
-    private static void GetFiles(string? library, List<FileInfo> allFiles)
+    private static void GetFiles(string library, List<FileInfo> allFiles)
     {
         //Generates an enumerable of a directory and iterates through it to append each item to allFiles and logs the addition.
         var directory = new DirectoryInfo(library);
@@ -48,7 +46,6 @@ public class ConverterBackend
     {
         try
         {
-            var av1 = fileInfo.ToLower().Contains("video: av1");
             return !fileInfo.ToLower().Contains("video: av1") &&
                     !fileInfo.Contains("DOVI configuration record");
         }
@@ -61,13 +58,8 @@ public class ConverterBackend
     
     public static bool CanEncodeHevc(string filePath, string fileInfo, double bitRate)
     {
-        //Grabs file info.
-        //Note: hide_banner hides program banner for easier readability and removing unnecessary text
-        var encodeCheckCommand = $"ffprobe -i '{filePath}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
-
         try
         {
-            var bitRateCheck = true;//bitRate > 15;
             return (!fileInfo.Contains("DOVI configuration record, profile: 7") &&
                     fileInfo.Contains("DOVI configuration record"));
         }
@@ -229,9 +221,9 @@ public class ConverterBackend
     }
     
     //Remuxes and will Encode file if above 75Mbps
-    public static ConverterStatus RemuxAndEncodeHevc(string filePath)
+    public static ConverterStatus RemuxAndEncodeHevc(string filePath, bool isNvidia)
     {
-        var fileConverter = new FileConverter(filePath);
+        var fileConverter = new FileConverter(filePath, isNvidia);
         var converted = fileConverter.RemuxAndEncodeHevc();
         fileConverter.AppendMetadata();
 
@@ -249,9 +241,9 @@ public class ConverterBackend
     }
     
     //Only encodes file from environment variable
-    public static ConverterStatus EncodeHevc(string filePath)
+    public static ConverterStatus EncodeHevc(string filePath, bool isNvidia)
     {
-        var fileConverter = new FileConverter(filePath);
+        var fileConverter = new FileConverter(filePath, isNvidia);
         var converted = fileConverter.EncodeHevc();
         fileConverter.AppendMetadata();
 
