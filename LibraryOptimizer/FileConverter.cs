@@ -3,6 +3,8 @@ namespace LibraryOptimizer;
 
 public class FileConverter
 {
+    #region Constructors
+
     public FileConverter(string filePath)
     {
         _commandFilePath = filePath;
@@ -101,6 +103,8 @@ public class FileConverter
             //INTEL ARC
             _reEncodeHevcProfile8Command = $"ffmpeg -i '{_hevcFile}' -c:v hevc_qsv -preset 1 -global_quality 3 -c:a copy '{_encodedHevc}'";
     }
+
+    #endregion
     
     private string _filePath;
     private string _commandFilePath;
@@ -127,6 +131,8 @@ public class FileConverter
 
     private bool _converted;
     private string _failedReason = string.Empty;
+
+    #region File Operations
 
     public ConverterStatus RemuxAndEncodeHevc()
     {
@@ -394,6 +400,8 @@ public class FileConverter
             ConverterBackend.DeleteFile(_outputFile);
         }
     }
+
+    #endregion
 
     public void AppendMetadata()
     {

@@ -4,6 +4,8 @@ namespace LibraryOptimizer;
 
 public class ConverterBackend
 {
+    #region DirectoryBuilder
+
     //Builds list of files from input directories.
     public static IEnumerable<FileInfo> BuildFilesList(List<string> libraries, string checkAll)
     {
@@ -37,6 +39,24 @@ public class ConverterBackend
         allFiles.AddRange(unSortedFiles);
     }
 
+    #endregion
+
+    #region File Operation Checks
+
+    public static bool ShouldBeProcessed(string filePath, bool retryFailed)
+    {
+        var grabMetadataCommand = $"ffprobe -i '{filePath}' -show_entries format_tags=LIBRARY_OPTIMIZER_APP -of default=noprint_wrappers=1";
+        var metadata = RunCommand(grabMetadataCommand, filePath, false);
+
+        if (metadata.Contains("Converted=True.")
+            || (metadata.Contains("Converted=False.") && !retryFailed))
+            return false;
+        if (metadata.Contains("Converted=False.") && retryFailed)
+            return true;
+        
+        return true;
+    }
+    
     public static bool IsProfile7(string fileInfo)
     {
         return fileInfo.Contains("DOVI configuration record: version: 1.0, profile: 7");
@@ -47,7 +67,7 @@ public class ConverterBackend
         try
         {
             return !fileInfo.ToLower().Contains("video: av1") &&
-                    !fileInfo.Contains("DOVI configuration record");
+                   !fileInfo.Contains("DOVI configuration record");
         }
         catch (Exception ex)
         {
@@ -70,25 +90,9 @@ public class ConverterBackend
         }
     }
 
-    public static void DeleteFile(string filePath)
-    {
-        if (File.Exists(filePath))
-        {
-            try
-            {
-                File.Delete(filePath);
-                ConsoleLog.WriteLine($"Deleted: {filePath}");
-            }
-            catch (Exception ex)
-            {
-                ConsoleLog.WriteLine($"Error deleting file {filePath}: {ex.Message}");
-            }
-        }
-        else
-        {
-            ConsoleLog.WriteLine($"File not found, skipping delete: {filePath}");
-        }
-    }
+    #endregion
+
+    #region Run Command
 
     private static string RunCommandInWindows(string command, string file, bool printOutput = true)
     {
@@ -219,7 +223,11 @@ public class ConverterBackend
             throw new NotSupportedException("Unsupported operating system.");
         }
     }
-    
+
+    #endregion
+
+    #region File Operations
+
     //Remuxes and will Encode file if above 75Mbps
     public static ConverterStatus RemuxAndEncodeHevc(string filePath, bool isNvidia)
     {
@@ -258,20 +266,8 @@ public class ConverterBackend
         
         return converted;
     }
-    
-    public static bool ShouldBeProcessed(string filePath, bool retryFailed)
-    {
-        var grabMetadataCommand = $"ffprobe -i '{filePath}' -show_entries format_tags=LIBRARY_OPTIMIZER_APP -of default=noprint_wrappers=1";
-        var metadata = RunCommand(grabMetadataCommand, filePath, false);
 
-        if (metadata.Contains("Converted=True.")
-            || (metadata.Contains("Converted=False.") && !retryFailed))
-            return false;
-        if (metadata.Contains("Converted=False.") && retryFailed)
-            return true;
-        
-        return true;
-    }
+    #endregion
 
     public static string FileFormatToCommand(string file)
     {
@@ -287,5 +283,25 @@ public class ConverterBackend
         originalFile = originalFile.Replace("'’", "’");
 
         return originalFile;
+    }
+    
+    public static void DeleteFile(string filePath)
+    {
+        if (File.Exists(filePath))
+        {
+            try
+            {
+                File.Delete(filePath);
+                ConsoleLog.WriteLine($"Deleted: {filePath}");
+            }
+            catch (Exception ex)
+            {
+                ConsoleLog.WriteLine($"Error deleting file {filePath}: {ex.Message}");
+            }
+        }
+        else
+        {
+            ConsoleLog.WriteLine($"File not found, skipping delete: {filePath}");
+        }
     }
 }
