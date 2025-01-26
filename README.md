@@ -18,7 +18,7 @@ The Optimizer will shrink your servers storage while retaining very high quality
 `docker pull slummybell/media-library-optimizer`
 <br>
 * Volume map `/config` to your desired configuration path on your machine.
-* Volume map `/tmp` to your ssd or some other directory separate from your library path. (ssd prefered due to drive speed)
+* Volume map `/incomplete` to your ssd or some other directory separate from your library path. (ssd prefered due to drive speed)
 * Container Variable`NVIDIA_VISIBLE_DEVICES` set to your desired Nvidia GPU (Intel Arc Support Soon.)
 * Set the extra parameters to `--runtime=nvidia`
 * Run container and modify the generated setup file from below.
