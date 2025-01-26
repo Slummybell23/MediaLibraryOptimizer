@@ -174,7 +174,16 @@ public class LibraryOptmizer
                         if (ConverterBackend.CanEncodeAv1(commandFile, fileInfo, startBitRate))
                         {
                             ConsoleLog.WriteLine("Copying file for AV1 Encode...");
-                            File.Copy(file, outputPathFile);
+                            try
+                            {
+                                File.Copy(file, outputPathFile);
+                            }
+                            catch (IOException e)
+                            {
+                                ConsoleLog.WriteLine("File in use. Skipping.");
+                                
+                                continue;
+                            }
 
                             converted = ConverterBackend.EncodeAv1(commandOutputFile, startBitRate, _isNvidia);
 
@@ -191,8 +200,17 @@ public class LibraryOptmizer
                         if (ConverterBackend.IsProfile7(fileInfo))
                         {
                             ConsoleLog.WriteLine("Copying file for Dolby Vision Profile 7 Remuxing...");
-                            File.Copy(file, commandOutputFile);
-                
+                            try
+                            {
+                                File.Copy(file, outputPathFile);
+                            }
+                            catch (IOException e)
+                            {
+                                ConsoleLog.WriteLine("File in use. Skipping.");
+                                
+                                continue;
+                            }
+                            
                             ConsoleLog.WriteLine($"Dolby Vision Profile 7 detected in: {file}");
                             
                             converted = ConverterBackend.Remux(commandOutputFile);
@@ -203,8 +221,17 @@ public class LibraryOptmizer
                         if (ConverterBackend.IsProfile7(fileInfo))
                         {
                             ConsoleLog.WriteLine("Copying file for Dolby Vision Profile 7 Remuxing and HEVC Encoding...");
-                            File.Copy(file, outputPathFile);
-                
+                            try
+                            {
+                                File.Copy(file, outputPathFile);
+                            }
+                            catch (IOException e)
+                            {
+                                ConsoleLog.WriteLine("File in use. Skipping.");
+                                
+                                continue;
+                            }
+                            
                             ConsoleLog.WriteLine($"Dolby Vision Profile 7 detected in: {file}");
                             
                             converted = ConverterBackend.RemuxAndEncodeHevc(commandOutputFile, _isNvidia);
@@ -222,8 +249,17 @@ public class LibraryOptmizer
                         if (ConverterBackend.CanEncodeHevc(commandFile, fileInfo, startBitRate))
                         {
                             ConsoleLog.WriteLine("Copying file for HEVC Encode...");
-                            File.Copy(file, outputPathFile);
-                
+                            try
+                            {
+                                File.Copy(file, outputPathFile);
+                            }
+                            catch (IOException e)
+                            {
+                                ConsoleLog.WriteLine("File in use. Skipping.");
+                                
+                                continue;
+                            }
+                            
                             converted = ConverterBackend.EncodeHevc(commandOutputFile, _isNvidia);
                         
                             encodeCheckCommand = $"ffprobe -i '{commandOutputFile}' -show_entries format=bit_rate -v quiet -of csv='p=0'";

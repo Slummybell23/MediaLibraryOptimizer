@@ -46,27 +46,13 @@ public class ConverterBackend
     public static bool ShouldBeProcessed(string filePath, bool retryFailed)
     {
         var grabMetadataCommand = $"ffprobe -i '{filePath}' -show_entries format_tags=LIBRARY_OPTIMIZER_APP -of default=noprint_wrappers=1";
+        
+        var metadata = RunCommand(grabMetadataCommand, filePath, false);
 
-        var metadataOrError = string.Empty;
-        try
-        {
-            metadataOrError = RunCommand(grabMetadataCommand, filePath, false);
-        }
-        catch
-        {
-            //Checks for access
-            if (metadataOrError.Contains("because it is being used by another process."))
-            {
-                return false;
-            }
-            
-            throw;
-        }
-
-        if (metadataOrError.Contains("Converted=True.")
-            || (metadataOrError.Contains("Converted=False.") && !retryFailed))
+        if (metadata.Contains("Converted=True.")
+            || (metadata.Contains("Converted=False.") && !retryFailed))
             return false;
-        if (metadataOrError.Contains("Converted=False.") && retryFailed)
+        if (metadata.Contains("Converted=False.") && retryFailed)
             return true;
         
         return true;
