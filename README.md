@@ -51,7 +51,7 @@ Only supports hardware accelerated Encoding. If you intend to use the Optimizer 
 Intended to run in a Docker Environment.
 
 ## Functionality
-Before any of these proccesses are ran, the file will get moved to the `/tmp` location.
+Before any of these proccesses are ran, the file will get moved to the `/incomplete` location.
 <br>
 For all encodes, the program will check if the output generated is larger than the input and discard the larger output and mark the encode as failed.
 ### AV1 Encode:
