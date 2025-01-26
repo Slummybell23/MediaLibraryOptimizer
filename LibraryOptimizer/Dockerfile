@@ -101,12 +101,8 @@ WORKDIR /app
 COPY --from=publish /app/publish .
 
 # Environment Variables
-ENV CHECK_ALL=N
-ENV ENCODE=N
-ENV ENCODEFILES=N
-ENV REMUX=N
-ENV STARTTIME=5
 ENV NVIDIA_DRIVER_CAPABILITIES=all
+ENV FORCE_START=n
 
 # Run the App
 ENTRYPOINT ["dotnet", "LibraryOptimizer.dll"]

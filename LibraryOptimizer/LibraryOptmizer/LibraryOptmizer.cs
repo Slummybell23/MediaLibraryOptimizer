@@ -14,6 +14,7 @@ public class LibraryOptmizer
     private bool _retryFailed;
     private string _configDir;
     private bool _isNvida;
+    private bool _forceStart = false;
 
     public List<string> Libraries = new List<string>();
     public string CheckAll = "y";
@@ -57,7 +58,7 @@ public class LibraryOptmizer
                 {
                     Libraries.Add(_dataFolder + library);
                 }
-
+                
                 RemuxDolbyVision = yamlObj.RemuxDolbyVision;
                 EncodeHevc = yamlObj.EncodeHevc;
                 EncodeAv1 = yamlObj.EncodeAv1;
@@ -108,6 +109,9 @@ public class LibraryOptmizer
     {
         while (true)
         {
+            if (Environment.GetEnvironmentVariable("FORCE_START") == "y")
+                _forceStart = true;
+            
             var now = DateTime.Now;
 
             //Calculates hours until start hour user specified.
@@ -115,10 +119,12 @@ public class LibraryOptmizer
             var hoursDifference = (StartHour + 24) - now.Hour;
             if (hoursDifference >= 24)
                 hoursDifference -= 24;
-
+            
             var hoursTillStart = hoursDifference;
-            if (hoursTillStart == 0)
+            if (hoursTillStart == 0 || _forceStart)
             {
+                _forceStart = false;
+
                 var notProcessed = 0;
                 var failedFiles = new List<string>();
                 var convertedFiles = new List<string>();
