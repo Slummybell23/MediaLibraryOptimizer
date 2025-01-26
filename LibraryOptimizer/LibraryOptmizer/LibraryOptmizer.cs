@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text;
+using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -42,7 +43,7 @@ public class LibraryOptmizer
 
         if (File.Exists(configFile))
         {
-            var reader = File.ReadAllText(configFile);
+            var yamlStr = File.ReadAllText(configFile);
             
             var deserializer = new DeserializerBuilder()
                 .WithNamingConvention(CamelCaseNamingConvention.Instance)
@@ -50,8 +51,8 @@ public class LibraryOptmizer
             try
             {
                 //yaml contains a string containing your YAML
-                var yamlObj = deserializer.Deserialize<LibraryOptimzerYaml>(reader);
-
+                var yamlObj = deserializer.Deserialize<LibraryOptimzerYaml>(yamlStr);
+                
                 foreach (var library in yamlObj.LibraryPaths)
                 {
                     Libraries.Add(_dataFolder + library);
@@ -64,6 +65,8 @@ public class LibraryOptmizer
                 StartHour = yamlObj.StartHour;
                 _retryFailed = yamlObj.RetryFailed;
                 _isNvida = yamlObj.IsNvidia;
+                
+                BuildConfigFile(yamlObj, configFile);
             }
             catch (Exception e)
             {
