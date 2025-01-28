@@ -59,19 +59,7 @@ RUN apt-get update && \
     chmod +x /usr/local/bin/ffmpeg /usr/local/bin/ffprobe && \
     # Clean up
     rm -rf /tmp/ffmpeg.tar.xz "/tmp/${EXTRACTED_DIR}" && \
-    # ---------------------------------------
-    # 5) Install Media Acceleration Drivers (Optional)
-    # ---------------------------------------
-    # Uncomment the following lines if you need Intel Media Drivers
-    # apt-get install -y \
-    #    intel-media-va-driver-non-free \
-    #    libigdgmm12 \
-    #    libmfx1 \
-    #    libmfxgen1 \
-    #    libva-drm2 \
-    #    libva2 \
-    #    libvpl2 && \
-    # ---------------------------------------
+
     # Final Cleanup to Reduce Image Size
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*

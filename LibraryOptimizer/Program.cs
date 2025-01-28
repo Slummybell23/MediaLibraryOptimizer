@@ -8,9 +8,7 @@ public abstract class Program
    private static void Main(string[] args)
    {
         var wrapper = new LibraryOptmizer.LibraryOptmizer();
-
-        wrapper.SetupOptimizer();
-
+        
         if (Debugger.IsAttached)
         {
             //File paths specified to my Windows machine for debugging.

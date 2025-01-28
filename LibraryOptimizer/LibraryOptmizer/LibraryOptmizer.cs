@@ -8,7 +8,6 @@ namespace LibraryOptimizer.LibraryOptmizer;
 
 public class LibraryOptmizer
 {
-    //Creates objects necessary for logging and converting files.
     private string _dataFolder = "/data";
     private string _incompleteFolder = "/incomplete";
     private bool _retryFailed;
@@ -22,8 +21,10 @@ public class LibraryOptmizer
     public bool EncodeHevc;
     public bool EncodeAv1;
     public bool RemuxDolbyVision;
-    
-    public void SetupOptimizer()
+
+    #region Constructors
+
+    public LibraryOptmizer()
     {
         if (OperatingSystem.IsWindows())
         {
@@ -104,6 +105,8 @@ public class LibraryOptmizer
             
         File.WriteAllText(configFile, configStr);
     }
+
+    #endregion
 
     public void ProcessLibrary()
     {
