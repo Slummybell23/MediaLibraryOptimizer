@@ -27,7 +27,6 @@ RUN dotnet publish "LibraryOptimizer.csproj" \
     -o /app/publish \
     /p:UseAppHost=false
 
-
 ######################################################################
 # 3) Final Runtime Stage: Lightweight .NET runtime + tools
 ######################################################################
@@ -56,7 +55,7 @@ RUN apt-get update && \
         locales \
         nano \
         tar \
-        xz-utils \ 
+        xz-utils \
         mkvtoolnix \
         jq \
         sqlite3 \
