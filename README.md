@@ -1,5 +1,7 @@
 # Media Library Optimizer
 
+<img src="Original Logo.png" alt="Media Library Optimizer Logo">
+
 ## An application to shrink the size of your media servers storage space without perceivable quality loss or artefacting!
 
 The Optimizer will shrink your servers storage while retaining very high quality.
