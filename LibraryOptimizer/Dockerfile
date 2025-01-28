@@ -56,6 +56,7 @@ RUN apt-get update && \
         locales \
         nano \
         tar \
+        xz-utils \ 
         mkvtoolnix \
         jq \
         sqlite3 \
