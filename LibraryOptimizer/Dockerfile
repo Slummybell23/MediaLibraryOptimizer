@@ -27,7 +27,6 @@ RUN dotnet publish "LibraryOptimizer.csproj" \
     -o /app/publish \
     /p:UseAppHost=false
 
-
 ######################################################################
 # 3) Final Runtime Stage: Lightweight .NET runtime + tools
 ######################################################################
@@ -56,7 +55,7 @@ RUN apt-get update && \
         locales \
         nano \
         tar \
-        xz-utils \ 
+        xz-utils \
         mkvtoolnix \
         jq \
         sqlite3 \
@@ -76,11 +75,11 @@ RUN apt-get update && \
     rm -f /tmp/dovi_tool.tar.gz && \
     \
     # Download and install latest FFmpeg build from BtbN
-    wget -q https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz -O /tmp/ffmpeg.tar.xz && \
+    wget -q https://github.com/jellyfin/jellyfin-ffmpeg/releases/download/v7.0.2-9/jellyfin-ffmpeg_7.0.2-9_portable_linux64-gpl.tar.xz -O /tmp/ffmpeg.tar.xz && \
     mkdir -p /tmp/ffmpeg && \
-    tar -xf /tmp/ffmpeg.tar.xz -C /tmp/ffmpeg --strip-components=1 && \
-    cp /tmp/ffmpeg/bin/ffmpeg /usr/local/bin/ && \
-    cp /tmp/ffmpeg/bin/ffprobe /usr/local/bin/ && \
+    tar -xf /tmp/ffmpeg.tar.xz -C /tmp/ffmpeg && \
+    cp /tmp/ffmpeg /usr/local/bin/ && \
+    cp /tmp/ffmpeg /usr/local/bin/ && \
     chmod +x /usr/local/bin/ffmpeg /usr/local/bin/ffprobe && \
     \
     # Cleanup to keep the image small
