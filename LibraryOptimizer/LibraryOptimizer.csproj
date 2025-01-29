@@ -9,13 +9,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Content Include="..\.dockerignore">
-        <Link>.dockerignore</Link>
-      </Content>
+      <PackageReference Include="YamlDotNet" Version="16.2.1" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="YamlDotNet" Version="16.2.1" />
+      <Content Include="..\.dockerignore">
+        <Link>.dockerignore</Link>
+      </Content>
     </ItemGroup>
 
 </Project>

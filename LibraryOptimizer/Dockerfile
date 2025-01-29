@@ -50,6 +50,7 @@ RUN apt-get update && \
         curl \
         gnupg \
         wget \
+        intel-media-va-driver-non-free \
         software-properties-common \
         apt-transport-https \
         locales \
