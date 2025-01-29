@@ -76,15 +76,11 @@ RUN apt-get update && \
     \
     # Download and install latest FFmpeg build from BtbN
     wget -q https://github.com/jellyfin/jellyfin-ffmpeg/releases/download/v7.0.2-9/jellyfin-ffmpeg_7.0.2-9_portable_linux64-gpl.tar.xz -O /tmp/ffmpeg.tar.xz && \
-    # Ensure the directory exists
-    mkdir -p /tmp/ffmpeg 
-    # Extract the tar.xz archive
-    tar -xf /tmp/ffmpeg.tar.xz -C /tmp/ffmpeg --strip-components=1 
-    # Copy only the binaries (not the entire directory)
-    cp /tmp/ffmpeg/bin/ffmpeg /usr/local/bin/
-    cp /tmp/ffmpeg/bin/ffprobe /usr/local/bin/
-    # Set executable permissions
-    chmod +x /usr/local/bin/ffmpeg /usr/local/bin/ffprobe
+    mkdir -p /tmp/ffmpeg && \
+    tar -xf /tmp/ffmpeg.tar.xz -C /tmp/ffmpeg && \
+    cp /tmp/ffmpeg/ffmpeg /usr/local/bin/ && \
+    cp /tmp/ffmpeg/ffprobe /usr/local/bin/ && \
+    chmod +x /usr/local/bin/ffmpeg /usr/local/bin/ffprobe && \
     \
     # Cleanup to keep the image small
     rm -rf /tmp/ffmpeg /tmp/ffmpeg.tar.xz && \
