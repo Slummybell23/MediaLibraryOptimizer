@@ -1,8 +1,8 @@
-name: Docker Image CI
+name: Push Dev Docker Img
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "dev" ]
 
 jobs:
 
@@ -22,4 +22,5 @@ jobs:
     - name: Build the Docker image
       run: docker build --file LibraryOptimizer/Dockerfile --tag slummybell/media-library-optimizer:latest LibraryOptimizer/
     - name: Push the Docker image
-      run: docker push slummybell/media-library-optimizer:latest
+      run: docker push slummybell/media-library-optimizer:dev
+
