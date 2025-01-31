@@ -47,12 +47,22 @@ public class ConverterBackend
     {
         var grabMetadataCommand = $"ffprobe -i '{filePath}' -show_entries format_tags=LIBRARY_OPTIMIZER_APP -of default=noprint_wrappers=1";
         
-        var metadata = RunCommand(grabMetadataCommand, filePath, false);
-
-        if (metadata.Contains("Converted=True.")
-            || (metadata.Contains("Converted=False.") && !retryFailed))
+        var metadataOrFail = string.Empty;
+        try
+        {
+            metadataOrFail = RunCommand(grabMetadataCommand, filePath, false);
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            
             return false;
-        if (metadata.Contains("Converted=False.") && retryFailed)
+        } 
+
+        if (metadataOrFail.Contains("Converted=True.")
+            || (metadataOrFail.Contains("Converted=False.") && !retryFailed))
+            return false;
+        if (metadataOrFail.Contains("Converted=False.") && retryFailed)
             return true;
         
         return true;
