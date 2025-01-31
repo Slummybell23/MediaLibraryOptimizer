@@ -51,6 +51,7 @@ RUN apt-get update && \
         gnupg \
         wget \
         intel-media-va-driver-non-free \
+        intel-oneapi-vpl \
         software-properties-common \
         apt-transport-https \
         locales \
