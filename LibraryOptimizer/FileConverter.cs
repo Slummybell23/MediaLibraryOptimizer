@@ -116,28 +116,28 @@ public class FileConverter
             //INTEL ARC
             if (optimizerSettings.Quality == QualityEnum.NearLossless)
             {
-                _encodeAv1Command = $"ffmpeg -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 1 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 1 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
             else if (bitRate >= 50 && (optimizerSettings.Quality == QualityEnum.HighQuality))
             {
-                _encodeAv1Command = $"ffmpeg -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 1 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 1 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
             else if (bitRate <= 50 && bitRate >= 31 && (optimizerSettings.Quality == QualityEnum.HighQuality))
             {
-                _encodeAv1Command = $"ffmpeg -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 6 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 6 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
             else if (bitRate <= 31 && bitRate >= 11 
                      || (bitRate >= 11 && (optimizerSettings.Quality == QualityEnum.Balanced)))
             {
-                _encodeAv1Command = $"ffmpeg -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 18 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 18 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
             else if (bitRate <= 11 && bitRate >= 6)
             {
-                _encodeAv1Command = $"ffmpeg -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 21 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 21 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
             else if (bitRate <= 6)
             {
-                _encodeAv1Command = $"ffmpeg -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 23 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 23 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
         }
     }
