@@ -31,7 +31,7 @@ public class FileConverter
     
     #region Constructors
 
-    public FileConverter(string inputFilePath)
+    public FileConverter(string inputFilePath, LibraryOptmizer.LibraryOptimizer optimizerSettings)
     {
         //inputFilePath inserted here is already formated for commands
         _commandInputFilePath = inputFilePath;
@@ -68,6 +68,14 @@ public class FileConverter
         _remuxCommand = $"mkvmerge -o '{_commandOutputFile}' -D '{inputFilePath}' '{_profile8HevcFile}'";
         //======================Dolby Vision 7 -> 8 Remuxing=============================
         
+        if(optimizerSettings.IsNvidia)
+            //NVIDIA NVENC
+            _reEncodeHevcProfile8Command = $"ffmpeg -i '{_hevcFile}' -c:v hevc_nvenc -preset p7 -cq 3 -c:a copy '{_encodedHevc}'";
+        else
+            //INTEL ARC
+            _reEncodeHevcProfile8Command = $"ffmpeg -i '{_hevcFile}' -c:v hevc_qsv -preset 1 -global_quality 3 -c:a copy '{_encodedHevc}'";
+
+        
         //Remove formatting for deleting.
         _inputFilePath = ConverterBackend.FileRemoveFormat(inputFilePath);
         _outputFile = ConverterBackend.FileRemoveFormat(_commandOutputFile);
@@ -83,67 +91,53 @@ public class FileConverter
     }
     
     //AV1
-    public FileConverter(string inputFilePath, double bitRate, bool isNvidia) : this(inputFilePath)
+    public FileConverter(string commandInputFilePath, double bitRate, LibraryOptmizer.LibraryOptimizer optimizerSettings) : this(commandInputFilePath, optimizerSettings)
     {
-        if (isNvidia)
+        if (optimizerSettings.IsNvidia)
         {
             //NVIDIA NVENC
             if (bitRate >= 12)
             {
-                _encodeAv1Command = $"ffmpeg -i '{inputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 25 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 25 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
             else if (bitRate <= 12 && bitRate >= 7)
             {
-                _encodeAv1Command = $"ffmpeg -i '{inputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 29 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 29 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
             else if (bitRate <= 7)
             {
-                _encodeAv1Command = $"ffmpeg -i '{inputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 32 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 32 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
         }
         else
         {
             //INTEL ARC
-            if (bitRate >= 50)
+            if (optimizerSettings.Quality == QualityEnum.NearLossless)
             {
-                _encodeAv1Command = $"ffmpeg -i '{inputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 1 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 1 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
-            else if (bitRate <= 50 && bitRate >= 31)
+            else if (bitRate >= 50 && (optimizerSettings.Quality == QualityEnum.HighQuality))
             {
-                _encodeAv1Command = $"ffmpeg -i '{inputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 6 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 1 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
-            else if (bitRate <= 31 && bitRate >= 12)
+            else if (bitRate <= 50 && bitRate >= 31 && (optimizerSettings.Quality == QualityEnum.HighQuality))
             {
-                _encodeAv1Command = $"ffmpeg -i '{inputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 18 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 6 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
-            else if (bitRate <= 12 && bitRate >= 7)
+            else if (bitRate <= 31 && bitRate >= 11 
+                     || (bitRate >= 11 && (optimizerSettings.Quality == QualityEnum.Balanced)))
             {
-                _encodeAv1Command = $"ffmpeg -i '{inputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 21 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 18 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
-            else if (bitRate <= 7)
+            else if (bitRate <= 11 && bitRate >= 6)
             {
-                _encodeAv1Command = $"ffmpeg -i '{inputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 23 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 21 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+            }
+            else if (bitRate <= 6)
+            {
+                _encodeAv1Command = $"ffmpeg -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 23 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
         }
-    }
-
-    //HEVC
-    public FileConverter(string inputFilePath, bool isNvidia) : this(inputFilePath)
-    { 
-        var directory = Path.GetDirectoryName(inputFilePath)!;
-        _hevcFile = Path.Combine(directory, $"{_videoName}hevc.hevc");
-        _encodedProfile8HevcFile = Path.Combine(directory, $"{_videoName}profile8encodedhevc.hevc");
-
-        if(isNvidia)
-            //NVIDIA NVENC
-            _reEncodeHevcProfile8Command = $"ffmpeg -i '{_hevcFile}' -c:v hevc_nvenc -preset p7 -cq 3 -c:a copy '{_encodedHevc}'";
-        else
-            //INTEL ARC
-            _reEncodeHevcProfile8Command = $"ffmpeg -i '{_hevcFile}' -c:v hevc_qsv -preset 1 -global_quality 3 -c:a copy '{_encodedHevc}'";
-        
-        directory = Path.GetDirectoryName(_inputFilePath)!;
-        _encodedHevc = Path.Combine(directory, $"{_videoName}encodedHevc.hevc");
-        _hevcFile = Path.Combine(directory, $"{_videoName}hevc.hevc");
     }
 
     #endregion

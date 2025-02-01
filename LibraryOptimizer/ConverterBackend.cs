@@ -240,9 +240,9 @@ public class ConverterBackend
     #region File Operations
 
     //Remuxes and will Encode file if above 75Mbps
-    public static ConverterStatus RemuxAndEncodeHevc(string filePath, bool isNvidia)
+    public static ConverterStatus RemuxAndEncodeHevc(string filePath, LibraryOptmizer.LibraryOptimizer optimizerSettings)
     {
-        var fileConverter = new FileConverter(filePath, isNvidia);
+        var fileConverter = new FileConverter(filePath, optimizerSettings);
         var converted = fileConverter.RemuxAndEncodeHevc();
         fileConverter.AppendMetadata();
 
@@ -250,28 +250,27 @@ public class ConverterBackend
     }
     
     //Only remux file from Dolby Vision Profile 7 to Profile 8
-    public static ConverterStatus Remux(string filePath)
+    public static ConverterStatus Remux(string filePath, LibraryOptmizer.LibraryOptimizer optimizerSettings)
     {
-        var fileConverter = new FileConverter(filePath);
+        var fileConverter = new FileConverter(filePath, optimizerSettings);
         var converted = fileConverter.Remux();
         fileConverter.AppendMetadata();
 
         return converted;
     }
     
-    //Only encodes file from environment variable
-    public static ConverterStatus EncodeHevc(string filePath, bool isNvidia)
+    public static ConverterStatus EncodeHevc(string filePath, LibraryOptmizer.LibraryOptimizer optimizerSettings)
     {
-        var fileConverter = new FileConverter(filePath, isNvidia);
+        var fileConverter = new FileConverter(filePath, optimizerSettings);
         var converted = fileConverter.EncodeHevc();
         fileConverter.AppendMetadata();
 
         return converted;
     }
     
-    public static ConverterStatus EncodeAv1(string filePath, double bitRate, bool isNvidia)
+    public static ConverterStatus EncodeAv1(string filePath, double bitRate, LibraryOptmizer.LibraryOptimizer optimizerSettings)
     {
-        var fileConverter = new FileConverter(filePath, bitRate, isNvidia);
+        var fileConverter = new FileConverter(filePath, bitRate, optimizerSettings);
         var converted = fileConverter.EncodeAv1();
         fileConverter.AppendMetadata();
         

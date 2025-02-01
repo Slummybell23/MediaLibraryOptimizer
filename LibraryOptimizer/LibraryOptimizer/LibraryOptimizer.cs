@@ -6,13 +6,12 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace LibraryOptimizer.LibraryOptmizer;
 
-public class LibraryOptmizer
+public class LibraryOptimizer
 {
     private string _dataFolder = "/data";
     private string _incompleteFolder = "/incomplete";
     private bool _retryFailed;
     private string _configDir;
-    private bool _isNvidia;
     private bool _forceStart = false;
 
     public List<string> Libraries = new List<string>();
@@ -21,10 +20,12 @@ public class LibraryOptmizer
     public bool EncodeHevc;
     public bool EncodeAv1;
     public bool RemuxDolbyVision;
+    public QualityEnum Quality;
+    public bool IsNvidia;
 
     #region Constructors
 
-    public LibraryOptmizer()
+    public LibraryOptimizer()
     {
         if (OperatingSystem.IsWindows())
         {
@@ -53,7 +54,7 @@ public class LibraryOptmizer
             try
             {
                 //yaml contains a string containing your YAML
-                var yamlObj = deserializer.Deserialize<LibraryOptimzerYaml>(yamlStr);
+                var yamlObj = deserializer.Deserialize<LibraryOptimizerYaml>(yamlStr);
                 
                 foreach (var library in yamlObj.LibraryPaths)
                 {
@@ -66,7 +67,8 @@ public class LibraryOptmizer
                 CheckAll = yamlObj.CheckAll;
                 StartHour = yamlObj.StartHour;
                 _retryFailed = yamlObj.RetryFailed;
-                _isNvidia = yamlObj.IsNvidia;
+                IsNvidia = yamlObj.IsNvidia;
+                Quality = yamlObj.Quality;
                 
                 BuildConfigFile(yamlObj, configFile);
             }
@@ -75,7 +77,7 @@ public class LibraryOptmizer
                 ConsoleLog.WriteLine(e.Message);
                 ConsoleLog.WriteLine("Re Writing Config File");
                 
-                var libraryOptimizerYaml = new LibraryOptimzerYaml();
+                var libraryOptimizerYaml = new LibraryOptimizerYaml();
                 libraryOptimizerYaml.LibraryPaths = Libraries;
                 
                 BuildConfigFile(libraryOptimizerYaml, configFile);
@@ -83,7 +85,7 @@ public class LibraryOptmizer
         }
         else
         {
-            var libraryOptimzerYaml = new LibraryOptimzerYaml();
+            var libraryOptimzerYaml = new LibraryOptimizerYaml();
             BuildConfigFile(libraryOptimzerYaml, configFile);
         }
         
@@ -96,12 +98,12 @@ public class LibraryOptmizer
         Directory.CreateDirectory(_incompleteFolder);
     }
 
-    private void BuildConfigFile(LibraryOptimzerYaml libraryOptimzerYaml, string configFile)
+    private void BuildConfigFile(LibraryOptimizerYaml libraryOptimizerYaml, string configFile)
     {
         var serializer = new SerializerBuilder()
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
             .Build();
-        var configStr = serializer.Serialize(libraryOptimzerYaml);
+        var configStr = serializer.Serialize(libraryOptimizerYaml);
             
         File.WriteAllText(configFile, configStr);
     }
@@ -173,7 +175,7 @@ public class LibraryOptmizer
                 
                     if (EncodeAv1)
                     {
-                        //Check if file is not av1, above 15mbps, and not dolby vision
+                        //Check if file is not av1, and not dolby vision
                         if (ConverterBackend.CanEncodeAv1(commandFile, fileInfo, startBitRate))
                         {
                             ConsoleLog.WriteLine("Copying file for AV1 Encode...");
@@ -188,7 +190,7 @@ public class LibraryOptmizer
                                 continue;
                             }
 
-                            converted = ConverterBackend.EncodeAv1(commandOutputFile, startBitRate, _isNvidia);
+                            converted = ConverterBackend.EncodeAv1(commandOutputFile, startBitRate, this);
 
                             encodeCheckCommand = $"ffprobe -i '{commandOutputFile}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
                             var bitRateOutput = ConverterBackend.RunCommand(encodeCheckCommand, commandOutputFile).Split().Last();
@@ -216,7 +218,7 @@ public class LibraryOptmizer
                             
                             ConsoleLog.WriteLine($"Dolby Vision Profile 7 detected in: {file}");
                             
-                            converted = ConverterBackend.Remux(commandOutputFile);
+                            converted = ConverterBackend.Remux(commandOutputFile, this);
                         }
                     }
                     if (RemuxDolbyVision && EncodeHevc && converted == ConverterStatus.NotConverted)
@@ -237,7 +239,7 @@ public class LibraryOptmizer
                             
                             ConsoleLog.WriteLine($"Dolby Vision Profile 7 detected in: {file}");
                             
-                            converted = ConverterBackend.RemuxAndEncodeHevc(commandOutputFile, _isNvidia);
+                            converted = ConverterBackend.RemuxAndEncodeHevc(commandOutputFile, this);
                         
                             encodeCheckCommand = $"ffprobe -i '{commandOutputFile}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
                             var bitRateOutput = ConverterBackend.RunCommand(encodeCheckCommand, outputPathFile).Split().Last();
@@ -263,7 +265,7 @@ public class LibraryOptmizer
                                 continue;
                             }
                             
-                            converted = ConverterBackend.EncodeHevc(commandOutputFile, _isNvidia);
+                            converted = ConverterBackend.EncodeHevc(commandOutputFile, this);
                         
                             encodeCheckCommand = $"ffprobe -i '{commandOutputFile}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
                             var bitRateOutput = ConverterBackend.RunCommand(encodeCheckCommand, outputPathFile).Split().Last();
