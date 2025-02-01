@@ -1,4 +1,6 @@
 
+using LibraryOptimizer.Enums;
+
 namespace LibraryOptimizer;
 
 public class FileConverter
@@ -144,7 +146,7 @@ public class FileConverter
 
     #region File Operations
 
-    public ConverterStatus RemuxAndEncodeHevc()
+    public ConverterStatusEnum RemuxAndEncodeHevc()
     {
         //Runs command sequence
         try
@@ -205,7 +207,7 @@ public class FileConverter
                 ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
 
                 _converted = true;
-                return ConverterStatus.Success;
+                return ConverterStatusEnum.Success;
             }
 
             ConsoleLog.WriteLine($"Remuxing Non Encoded to MKV: {_remuxCommand}");
@@ -220,14 +222,14 @@ public class FileConverter
             ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
             
             _converted = true;
-            return ConverterStatus.Success;
+            return ConverterStatusEnum.Success;
         }
         catch (Exception ex)
         {
             ConsoleLog.WriteLine($"Error during conversion: {ex.Message}");
             
             _converted = false;
-            return ConverterStatus.Failed;
+            return ConverterStatusEnum.Failed;
         }
         finally
         {
@@ -242,7 +244,7 @@ public class FileConverter
         }
     }
     
-    public ConverterStatus Remux()
+    public ConverterStatusEnum Remux()
     {
         //Runs command sequence
         try
@@ -263,14 +265,14 @@ public class FileConverter
             ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
             
             _converted = true;
-            return ConverterStatus.Success;
+            return ConverterStatusEnum.Success;
         }
         catch (Exception ex)
         {
             ConsoleLog.WriteLine($"Error during conversion: {ex.Message}");
             
             _converted = false;
-            return ConverterStatus.Failed;
+            return ConverterStatusEnum.Failed;
         }
         finally
         {
@@ -282,7 +284,7 @@ public class FileConverter
         }
     }
     
-    public ConverterStatus EncodeHevc()
+    public ConverterStatusEnum EncodeHevc()
     {
         //Runs command sequence
         try
@@ -331,7 +333,7 @@ public class FileConverter
 
                 _failedReason = "Output file larger than input.";
                 _converted = false;
-                return ConverterStatus.Failed;
+                return ConverterStatusEnum.Failed;
             }
             else
             {
@@ -342,14 +344,14 @@ public class FileConverter
             }
 
             _converted = true;
-            return ConverterStatus.Success;
+            return ConverterStatusEnum.Success;
         }
         catch (Exception ex)
         {
             ConsoleLog.WriteLine($"Error during conversion: {ex.Message}");
 
             _converted = false;
-            return ConverterStatus.Failed;
+            return ConverterStatusEnum.Failed;
         }
         finally
         {
@@ -364,7 +366,7 @@ public class FileConverter
         }
     }
     
-    public ConverterStatus EncodeAv1()
+    public ConverterStatusEnum EncodeAv1()
     {
         //Runs command sequence
         try
@@ -385,7 +387,7 @@ public class FileConverter
 
                 _failedReason = "Output file larger than input.";
                 _converted = false;
-                return ConverterStatus.Failed;
+                return ConverterStatusEnum.Failed;
             }
             else
             {
@@ -396,14 +398,14 @@ public class FileConverter
             }
 
             _converted = true;
-            return ConverterStatus.Success;
+            return ConverterStatusEnum.Success;
         }
         catch (Exception ex)
         {
             ConsoleLog.WriteLine($"Error during conversion: {ex.Message}");
 
             _converted = false;
-            return ConverterStatus.Failed;
+            return ConverterStatusEnum.Failed;
         }
         finally
         {

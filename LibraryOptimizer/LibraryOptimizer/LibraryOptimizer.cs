@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text;
+using LibraryOptimizer.Enums;
 using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -156,7 +157,7 @@ public class LibraryOptimizer
                         continue;
                     }
 
-                    var converted = ConverterStatus.NotConverted;
+                    var converted = ConverterStatusEnum.NotConverted;
 
                     //Start timer to calculate time to convert file
                     var start = DateTime.Now;
@@ -200,7 +201,7 @@ public class LibraryOptimizer
                             ConsoleLog.WriteLine($"Ending bitrate: {endBitRate} mbps");
                         }
                     }
-                    if (RemuxDolbyVision && !EncodeHevc && converted == ConverterStatus.NotConverted)
+                    if (RemuxDolbyVision && !EncodeHevc && converted == ConverterStatusEnum.NotConverted)
                     {
                         if (ConverterBackend.IsProfile7(fileInfo))
                         {
@@ -221,7 +222,7 @@ public class LibraryOptimizer
                             converted = ConverterBackend.Remux(commandOutputFile, this);
                         }
                     }
-                    if (RemuxDolbyVision && EncodeHevc && converted == ConverterStatus.NotConverted)
+                    if (RemuxDolbyVision && EncodeHevc && converted == ConverterStatusEnum.NotConverted)
                     {
                         if (ConverterBackend.IsProfile7(fileInfo))
                         {
@@ -249,7 +250,7 @@ public class LibraryOptimizer
                             ConsoleLog.WriteLine($"Ending bitrate: {endBitRate} mbps");
                         }
                     }
-                    if (EncodeHevc && converted == ConverterStatus.NotConverted)
+                    if (EncodeHevc && converted == ConverterStatusEnum.NotConverted)
                     {
                         if (ConverterBackend.CanEncodeHevc(commandFile, fileInfo, startBitRate))
                         {
@@ -276,11 +277,11 @@ public class LibraryOptimizer
                         }
                     }
 
-                    if (converted != ConverterStatus.NotConverted)
+                    if (converted != ConverterStatusEnum.NotConverted)
                     {                            
                         ConsoleLog.WriteLine("Processing done. Moving output file to library... /n DO NOT TURN OFF PROGRAM DURING THIS");
 
-                        if (converted == ConverterStatus.Success)
+                        if (converted == ConverterStatusEnum.Success)
                         {
                             convertedFiles.Add(file);
                         }
@@ -298,13 +299,13 @@ public class LibraryOptimizer
                         
                         ConsoleLog.WriteLine($"Conversion Time: {timeCost.ToString()}");
                         
-                        if(converted == ConverterStatus.Success)
+                        if(converted == ConverterStatusEnum.Success)
                             ConsoleLog.LogFile(file, true);
                         else
                             ConsoleLog.LogFile(file, false);
                     }
                 
-                    if(converted == ConverterStatus.NotConverted)
+                    if(converted == ConverterStatusEnum.NotConverted)
                     {
                         ConsoleLog.WriteLine($"Skipping: {file}");
                         notProcessed++;

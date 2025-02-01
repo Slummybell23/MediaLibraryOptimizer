@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using LibraryOptimizer.Enums;
 
 namespace LibraryOptimizer;
 
@@ -240,7 +241,7 @@ public class ConverterBackend
     #region File Operations
 
     //Remuxes and will Encode file if above 75Mbps
-    public static ConverterStatus RemuxAndEncodeHevc(string filePath, LibraryOptmizer.LibraryOptimizer optimizerSettings)
+    public static ConverterStatusEnum RemuxAndEncodeHevc(string filePath, LibraryOptmizer.LibraryOptimizer optimizerSettings)
     {
         var fileConverter = new FileConverter(filePath, optimizerSettings);
         var converted = fileConverter.RemuxAndEncodeHevc();
@@ -250,7 +251,7 @@ public class ConverterBackend
     }
     
     //Only remux file from Dolby Vision Profile 7 to Profile 8
-    public static ConverterStatus Remux(string filePath, LibraryOptmizer.LibraryOptimizer optimizerSettings)
+    public static ConverterStatusEnum Remux(string filePath, LibraryOptmizer.LibraryOptimizer optimizerSettings)
     {
         var fileConverter = new FileConverter(filePath, optimizerSettings);
         var converted = fileConverter.Remux();
@@ -259,7 +260,7 @@ public class ConverterBackend
         return converted;
     }
     
-    public static ConverterStatus EncodeHevc(string filePath, LibraryOptmizer.LibraryOptimizer optimizerSettings)
+    public static ConverterStatusEnum EncodeHevc(string filePath, LibraryOptmizer.LibraryOptimizer optimizerSettings)
     {
         var fileConverter = new FileConverter(filePath, optimizerSettings);
         var converted = fileConverter.EncodeHevc();
@@ -268,7 +269,7 @@ public class ConverterBackend
         return converted;
     }
     
-    public static ConverterStatus EncodeAv1(string filePath, double bitRate, LibraryOptmizer.LibraryOptimizer optimizerSettings)
+    public static ConverterStatusEnum EncodeAv1(string filePath, double bitRate, LibraryOptmizer.LibraryOptimizer optimizerSettings)
     {
         var fileConverter = new FileConverter(filePath, bitRate, optimizerSettings);
         var converted = fileConverter.EncodeAv1();
