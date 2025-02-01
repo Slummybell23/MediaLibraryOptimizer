@@ -1,4 +1,4 @@
-namespace LibraryOptimizer;
+namespace LibraryOptimizer.Enums;
 
 public enum QualityEnum
 {
