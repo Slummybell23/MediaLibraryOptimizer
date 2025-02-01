@@ -276,7 +276,7 @@ public class LibraryOptmizer
 
                     if (converted != ConverterStatus.NotConverted)
                     {                            
-                        ConsoleLog.WriteLine("Processing done. Moving output file to library.");
+                        ConsoleLog.WriteLine("Processing done. Moving output file to library... /n DO NOT TURN OFF PROGRAM DURING THIS");
 
                         if (converted == ConverterStatus.Success)
                         {
