@@ -104,11 +104,15 @@ public class FileConverter
         else
         {
             //INTEL ARC
-            if (bitRate >= 27)
+            if (bitRate >= 50)
             {
-                _encodeAv1Command = $"ffmpeg -i '{inputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 3 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -i '{inputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 1 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
-            else if (bitRate <= 27 && bitRate >= 12)
+            else if (bitRate <= 50 && bitRate >= 31)
+            {
+                _encodeAv1Command = $"ffmpeg -i '{inputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 6 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+            }
+            else if (bitRate <= 31 && bitRate >= 12)
             {
                 _encodeAv1Command = $"ffmpeg -i '{inputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 18 -preset 1 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
