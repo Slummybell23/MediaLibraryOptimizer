@@ -1,6 +1,6 @@
 namespace LibraryOptimizer.LibraryOptmizer;
 
-public class LibraryOptimzerYaml
+public class LibraryOptimizerYaml
 {
     public List<string> LibraryPaths { get; set; } = new List<string>() {"Replace Me", "Replace Me", "..."};
     public string CheckAll { get; set; }  = "y";
@@ -10,4 +10,5 @@ public class LibraryOptimzerYaml
     public bool RemuxDolbyVision = false;
     public bool RetryFailed = false;
     public bool IsNvidia = false;
+    public QualityEnum Quality = QualityEnum.Balanced;
 }
