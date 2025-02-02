@@ -31,7 +31,7 @@ public class LibraryOptimizer
         if (OperatingSystem.IsWindows())
         {
             _configDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
-            _incompleteFolder = "Y:\\";
+            _incompleteFolder = "E:\\";
         }
         else if (OperatingSystem.IsLinux())
         {
