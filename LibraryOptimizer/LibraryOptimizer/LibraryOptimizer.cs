@@ -1,11 +1,10 @@
 using System.Reflection;
 using System.Text;
 using LibraryOptimizer.Enums;
-using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace LibraryOptimizer.LibraryOptmizer;
+namespace LibraryOptimizer.LibraryOptimizer;
 
 public class LibraryOptimizer
 {
@@ -141,7 +140,7 @@ public class LibraryOptimizer
                 foreach (var fileInfoEntry in directory)
                 {
                     var file = fileInfoEntry.FullName;
-
+                    
                     var commandFile = ConverterBackend.FileFormatToCommand(file);
                 
                     var fileName = Path.GetFileName(file);
