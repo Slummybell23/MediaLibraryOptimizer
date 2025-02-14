@@ -1,6 +1,6 @@
 using LibraryOptimizer.Enums;
 
-namespace LibraryOptimizer.LibraryOptmizer;
+namespace LibraryOptimizer.LibraryOptimizer;
 
 public class LibraryOptimizerYaml
 {

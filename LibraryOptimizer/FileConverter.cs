@@ -33,7 +33,7 @@ public class FileConverter
     
     #region Constructors
 
-    public FileConverter(string inputFilePath, LibraryOptmizer.LibraryOptimizer optimizerSettings)
+    public FileConverter(string inputFilePath, LibraryOptimizer.LibraryOptimizer optimizerSettings)
     {
         //inputFilePath inserted here is already formated for commands
         _commandInputFilePath = inputFilePath;
@@ -93,7 +93,7 @@ public class FileConverter
     }
     
     //AV1
-    public FileConverter(string commandInputFilePath, double bitRate, LibraryOptmizer.LibraryOptimizer optimizerSettings) : this(commandInputFilePath, optimizerSettings)
+    public FileConverter(string commandInputFilePath, double bitRate, LibraryOptimizer.LibraryOptimizer optimizerSettings) : this(commandInputFilePath, optimizerSettings)
     {
         if (optimizerSettings.IsNvidia)
         {
