@@ -54,7 +54,7 @@ public class FileConverter
         //Copies the HEVC stream of the mkv container to a seperate hevc file.
         //Sets metadata level to 150 for easier proccessing on slower decoders in case hevc is level 153.
         //Difference is negligible unless you're doing 8k resolution files.
-        _extractCommand = $"ffmpeg -i '{inputFilePath}' -map 0:v:0 -bufsize 64M -c copy -bsf:v hevc_metadata=level=150 '{_hevcFile}'";
+        _extractCommand = $"ffmpeg -i '{inputFilePath}' -map 0:v:0 -c copy -bsf:v '{_hevcFile}'";
         
         //Converts the hevc file from Dolby Vision Profile 7 to Dolby Vision Profile 8.
         _convertCommand = $"dovi_tool -m 2 convert -i '{_hevcFile}' -o '{_profile8HevcFile}'";
