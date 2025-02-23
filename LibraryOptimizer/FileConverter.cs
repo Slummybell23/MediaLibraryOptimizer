@@ -52,10 +52,8 @@ public class FileConverter
         
         //======================Dolby Vision 7 -> 8 Remuxing=============================
         //Copies the HEVC stream of the mkv container to a seperate hevc file.
-        //Sets metadata level to 150 for easier proccessing on slower decoders in case hevc is level 153.
-        //Difference is negligible unless you're doing 8k resolution files.
-        _extractCommand = $"ffmpeg -i '{inputFilePath}' -map 0:v:0 -c copy -bsf:v '{_hevcFile}'";
-        
+        _extractCommand = $"ffmpeg -i '{inputFilePath}' -map 0:v:0 -c copy '{_hevcFile}'";
+
         //Converts the hevc file from Dolby Vision Profile 7 to Dolby Vision Profile 8.
         _convertCommand = $"dovi_tool -m 2 convert -i '{_hevcFile}' -o '{_profile8HevcFile}'";
 
@@ -137,7 +135,7 @@ public class FileConverter
             }
             else if (bitRate <= 6)
             {
-                _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 23 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 22 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
         }
     }

@@ -129,7 +129,7 @@ public class LibraryOptimizer
             if (hoursTillStart == 0 || _forceStart)
             {
                 _forceStart = false;
-
+                
                 var notProcessed = 0;
                 var failedFiles = new List<string>();
                 var convertedFiles = new List<string>();
@@ -142,7 +142,8 @@ public class LibraryOptimizer
                     var file = fileInfoEntry.FullName;
                     
                     var commandFile = ConverterBackend.FileFormatToCommand(file);
-                
+
+                    var videoInfo = new VideoInfo(commandFile);
                     var fileName = Path.GetFileName(file);
                     var outputPathFile = Path.Combine(_incompleteFolder, $"{fileName}");
                     var commandOutputFile = ConverterBackend.FileFormatToCommand(outputPathFile);
