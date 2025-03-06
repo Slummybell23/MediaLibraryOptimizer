@@ -35,7 +35,9 @@ public abstract class ConverterBackend
     {
         //Generates an enumerable of a directory and iterates through it to append each item to allFiles and logs the addition.
         var directory = new DirectoryInfo(library);
-        var unSortedFiles = directory.GetFiles("*.mkv", SearchOption.AllDirectories);
+        //Old directory.GetFiles("*.mkv", SearchOption.AllDirectories);
+        var unSortedFiles = directory.GetFiles("*.*", SearchOption.AllDirectories)
+            .Where(f => f.FullName.EndsWith(".mkv", StringComparison.OrdinalIgnoreCase));
         
         allFiles.AddRange(unSortedFiles);
     }
