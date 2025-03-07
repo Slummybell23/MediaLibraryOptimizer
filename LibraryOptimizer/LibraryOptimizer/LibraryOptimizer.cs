@@ -139,17 +139,12 @@ public class LibraryOptimizer
                 ConsoleLog.WriteLine($"Processing files...");
                 foreach (var fileInfoEntry in directory)
                 {
-                    var file = fileInfoEntry.FullName;
+                    var inputFile = fileInfoEntry.FullName;
+                    var commandFile = ConverterBackend.FileFormatToCommand(inputFile);
+                    var videoInfo = new VideoInfo(inputFile, this);
                     
-                    var commandFile = ConverterBackend.FileFormatToCommand(file);
-
-                    var videoInfo = new VideoInfo(commandFile);
-                    var fileName = Path.GetFileName(file);
-                    var outputPathFile = Path.Combine(_incompleteFolder, $"{fileName}");
-                    var commandOutputFile = ConverterBackend.FileFormatToCommand(outputPathFile);
-
                     ConsoleLog.ResetLogText();
-                    ConsoleLog.WriteLine($"Processing file: {file}");
+                    ConsoleLog.WriteLine($"Processing file: {inputFile}");
 
                     if (!ConverterBackend.ShouldBeProcessed(commandFile, _retryFailed))
                     {
@@ -177,20 +172,8 @@ public class LibraryOptimizer
                     if (EncodeAv1)
                     {
                         //Check if file is not av1, and not dolby vision
-                        if (ConverterBackend.CanEncodeAv1(commandFile, fileInfo, startBitRate))
+                        if (ConverterBackend.CanEncodeAv1(fileInfo))
                         {
-                            ConsoleLog.WriteLine("Copying file for AV1 Encode...");
-                            try
-                            {
-                                File.Copy(file, outputPathFile);
-                            }
-                            catch (IOException e)
-                            {
-                                ConsoleLog.WriteLine("File in use. Skipping.");
-                                
-                                continue;
-                            }
-
                             converted = ConverterBackend.EncodeAv1(commandOutputFile, startBitRate, this);
 
                             encodeCheckCommand = $"ffprobe -i '{commandOutputFile}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
@@ -201,81 +184,45 @@ public class LibraryOptimizer
                             ConsoleLog.WriteLine($"Ending bitrate: {endBitRate} mbps");
                         }
                     }
-                    if (RemuxDolbyVision && !EncodeHevc && converted == ConverterStatusEnum.NotConverted)
-                    {
-                        if (ConverterBackend.IsProfile7(fileInfo))
-                        {
-                            ConsoleLog.WriteLine("Copying file for Dolby Vision Profile 7 Remuxing...");
-                            try
-                            {
-                                File.Copy(file, outputPathFile);
-                            }
-                            catch (IOException e)
-                            {
-                                ConsoleLog.WriteLine("File in use. Skipping.");
-                                
-                                continue;
-                            }
-                            
-                            ConsoleLog.WriteLine($"Dolby Vision Profile 7 detected in: {file}");
-                            
-                            converted = ConverterBackend.Remux(commandOutputFile, this);
-                        }
-                    }
-                    if (RemuxDolbyVision && EncodeHevc && converted == ConverterStatusEnum.NotConverted)
-                    {
-                        if (ConverterBackend.IsProfile7(fileInfo))
-                        {
-                            ConsoleLog.WriteLine("Copying file for Dolby Vision Profile 7 Remuxing and HEVC Encoding...");
-                            try
-                            {
-                                File.Copy(file, outputPathFile);
-                            }
-                            catch (IOException e)
-                            {
-                                ConsoleLog.WriteLine("File in use. Skipping.");
-                                
-                                continue;
-                            }
-                            
-                            ConsoleLog.WriteLine($"Dolby Vision Profile 7 detected in: {file}");
-                            
-                            converted = ConverterBackend.RemuxAndEncodeHevc(commandOutputFile, this);
-                        
-                            encodeCheckCommand = $"ffprobe -i '{commandOutputFile}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
-                            var bitRateOutput = ConverterBackend.RunCommand(encodeCheckCommand, outputPathFile).Split().Last();
-                            var endBitRate = double.Parse(bitRateOutput) / 1000000.0;
-                    
-                            ConsoleLog.WriteLine($"Starting bitrate: {startBitRate} mbps");
-                            ConsoleLog.WriteLine($"Ending bitrate: {endBitRate} mbps");
-                        }
-                    }
-                    if (EncodeHevc && converted == ConverterStatusEnum.NotConverted)
-                    {
-                        if (ConverterBackend.CanEncodeHevc(commandFile, fileInfo, startBitRate))
-                        {
-                            ConsoleLog.WriteLine("Copying file for HEVC Encode...");
-                            try
-                            {
-                                File.Copy(file, outputPathFile);
-                            }
-                            catch (IOException e)
-                            {
-                                ConsoleLog.WriteLine("File in use. Skipping.");
-                                
-                                continue;
-                            }
-                            
-                            converted = ConverterBackend.EncodeHevc(commandOutputFile, this);
-                        
-                            encodeCheckCommand = $"ffprobe -i '{commandOutputFile}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
-                            var bitRateOutput = ConverterBackend.RunCommand(encodeCheckCommand, outputPathFile).Split().Last();
-                            var endBitRate = double.Parse(bitRateOutput) / 1000000.0;
-                    
-                            ConsoleLog.WriteLine($"Starting bitrate: {startBitRate} mbps");
-                            ConsoleLog.WriteLine($"Ending bitrate: {endBitRate} mbps");
-                        }
-                    }
+                    // if (RemuxDolbyVision && !EncodeHevc && converted == ConverterStatusEnum.NotConverted)
+                    // {
+                    //     if (ConverterBackend.IsProfile7(fileInfo))
+                    //     {
+                    //         ConsoleLog.WriteLine($"Dolby Vision Profile 7 detected in: {file}");
+                    //         
+                    //         converted = ConverterBackend.Remux(commandOutputFile, this);
+                    //     }
+                    // }
+                    // if (RemuxDolbyVision && EncodeHevc && converted == ConverterStatusEnum.NotConverted)
+                    // {
+                    //     if (ConverterBackend.IsProfile7(fileInfo))
+                    //     {
+                    //         ConsoleLog.WriteLine($"Dolby Vision Profile 7 detected in: {file}");
+                    //         
+                    //         converted = ConverterBackend.RemuxAndEncodeHevc(commandOutputFile, this);
+                    //     
+                    //         encodeCheckCommand = $"ffprobe -i '{commandOutputFile}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
+                    //         var bitRateOutput = ConverterBackend.RunCommand(encodeCheckCommand, outputPathFile).Split().Last();
+                    //         var endBitRate = double.Parse(bitRateOutput) / 1000000.0;
+                    //
+                    //         ConsoleLog.WriteLine($"Starting bitrate: {startBitRate} mbps");
+                    //         ConsoleLog.WriteLine($"Ending bitrate: {endBitRate} mbps");
+                    //     }
+                    // }
+                    // if (EncodeHevc && converted == ConverterStatusEnum.NotConverted)
+                    // {
+                    //     if (ConverterBackend.CanEncodeHevc(commandFile, fileInfo, startBitRate))
+                    //     {
+                    //         converted = ConverterBackend.EncodeHevc(commandOutputFile, this);
+                    //     
+                    //         encodeCheckCommand = $"ffprobe -i '{commandOutputFile}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
+                    //         var bitRateOutput = ConverterBackend.RunCommand(encodeCheckCommand, outputPathFile).Split().Last();
+                    //         var endBitRate = double.Parse(bitRateOutput) / 1000000.0;
+                    //
+                    //         ConsoleLog.WriteLine($"Starting bitrate: {startBitRate} mbps");
+                    //         ConsoleLog.WriteLine($"Ending bitrate: {endBitRate} mbps");
+                    //     }
+                    // }
 
                     if (converted != ConverterStatusEnum.NotConverted)
                     {                            
@@ -283,16 +230,12 @@ public class LibraryOptimizer
 
                         if (converted == ConverterStatusEnum.Success)
                         {
-                            convertedFiles.Add(file);
+                            convertedFiles.Add(inputFile);
                         }
                         else
                         {
-                            failedFiles.Add(file);
+                            failedFiles.Add(inputFile);
                         }
-                    
-                        File.Move(outputPathFile, file, true);
-
-                        ConverterBackend.DeleteFile(outputPathFile);
 
                         var end = DateTime.Now;
                         var timeCost = end - start;
@@ -300,14 +243,14 @@ public class LibraryOptimizer
                         ConsoleLog.WriteLine($"Conversion Time: {timeCost.ToString()}");
                         
                         if(converted == ConverterStatusEnum.Success)
-                            ConsoleLog.LogFile(file, true);
+                            ConsoleLog.LogFile(inputFile, true);
                         else
-                            ConsoleLog.LogFile(file, false);
+                            ConsoleLog.LogFile(inputFile, false);
                     }
                 
                     if(converted == ConverterStatusEnum.NotConverted)
                     {
-                        ConsoleLog.WriteLine($"Skipping: {file}");
+                        ConsoleLog.WriteLine($"Skipping: {inputFile}");
                         notProcessed++;
                     }
                 }

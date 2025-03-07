@@ -74,7 +74,7 @@ public abstract class ConverterBackend
         return fileInfo.Contains("DOVI configuration record: version: 1.0, profile: 7");
     }
     
-    public static bool CanEncodeAv1(string filePath, string fileInfo, double bitRate)
+    public static bool CanEncodeAv1(string fileInfo)
     {
         try
         {
@@ -243,7 +243,7 @@ public abstract class ConverterBackend
     //Remuxes and will Encode file if above 75Mbps
     public static ConverterStatusEnum RemuxAndEncodeHevc(string filePath, LibraryOptimizer.LibraryOptimizer optimizerSettings)
     {
-        var fileConverter = new FileConverter(filePath, optimizerSettings);
+        var fileConverter = new VideoInfo(filePath, optimizerSettings);
         var converted = fileConverter.RemuxAndEncodeHevc();
         fileConverter.AppendMetadata();
 
@@ -253,7 +253,7 @@ public abstract class ConverterBackend
     //Only remux file from Dolby Vision Profile 7 to Profile 8
     public static ConverterStatusEnum Remux(string filePath, LibraryOptimizer.LibraryOptimizer optimizerSettings)
     {
-        var fileConverter = new FileConverter(filePath, optimizerSettings);
+        var fileConverter = new VideoInfo(filePath, optimizerSettings);
         var converted = fileConverter.Remux();
         fileConverter.AppendMetadata();
 
@@ -262,7 +262,7 @@ public abstract class ConverterBackend
     
     public static ConverterStatusEnum EncodeHevc(string filePath, LibraryOptimizer.LibraryOptimizer optimizerSettings)
     {
-        var fileConverter = new FileConverter(filePath, optimizerSettings);
+        var fileConverter = new VideoInfo(filePath, optimizerSettings);
         var converted = fileConverter.EncodeHevc();
         fileConverter.AppendMetadata();
 
@@ -271,7 +271,7 @@ public abstract class ConverterBackend
     
     public static ConverterStatusEnum EncodeAv1(string filePath, double bitRate, LibraryOptimizer.LibraryOptimizer optimizerSettings)
     {
-        var fileConverter = new FileConverter(filePath, bitRate, optimizerSettings);
+        var fileConverter = new VideoInfo(filePath, bitRate, optimizerSettings);
         var converted = fileConverter.EncodeAv1();
         fileConverter.AppendMetadata();
         
