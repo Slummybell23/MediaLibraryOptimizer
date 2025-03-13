@@ -449,7 +449,8 @@ public class VideoInfo
         var regex = new Regex("(bitrate:)(\\s)(\\d)*");
 
         var match = regex.Match(ffmpegFileInfo);
-        return double.Parse(match.Value) / 1000000.0;
+        var parsed = match.Value.Split("bitrate:")[1].Trim();
+        return double.Parse(parsed) / 1000000.0;
     }
     
     public void AppendMetadata()
