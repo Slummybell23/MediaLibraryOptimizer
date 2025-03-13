@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using LibraryOptimizer.Enums;
 
 namespace LibraryOptimizer;
@@ -241,39 +242,39 @@ public abstract class ConverterBackend
     #region File Operations
 
     //Remuxes and will Encode file if above 75Mbps
-    public static ConverterStatusEnum RemuxAndEncodeHevc(string filePath, LibraryOptimizer.LibraryOptimizer optimizerSettings)
+    public static ConverterStatusEnum RemuxAndEncodeHevc(VideoInfo videoInfo)
     {
-        var fileConverter = new VideoInfo(filePath, optimizerSettings);
-        var converted = fileConverter.RemuxAndEncodeHevc();
-        fileConverter.AppendMetadata();
+        videoInfo.SetVideoInfoCommands();
+        var converted = videoInfo.RemuxAndEncodeHevc();
+        videoInfo.AppendMetadata();
 
         return converted;
     }
     
     //Only remux file from Dolby Vision Profile 7 to Profile 8
-    public static ConverterStatusEnum Remux(string filePath, LibraryOptimizer.LibraryOptimizer optimizerSettings)
+    public static ConverterStatusEnum Remux(VideoInfo videoInfo)
     {
-        var fileConverter = new VideoInfo(filePath, optimizerSettings);
-        var converted = fileConverter.Remux();
-        fileConverter.AppendMetadata();
+        videoInfo.SetVideoInfoCommands();
+        var converted = videoInfo.Remux();
+        videoInfo.AppendMetadata();
 
         return converted;
     }
     
-    public static ConverterStatusEnum EncodeHevc(string filePath, LibraryOptimizer.LibraryOptimizer optimizerSettings)
+    public static ConverterStatusEnum EncodeHevc(VideoInfo videoInfo)
     {
-        var fileConverter = new VideoInfo(filePath, optimizerSettings);
-        var converted = fileConverter.EncodeHevc();
-        fileConverter.AppendMetadata();
+        videoInfo.SetVideoInfoCommands();
+        var converted = videoInfo.EncodeHevc();
+        videoInfo.AppendMetadata();
 
         return converted;
     }
     
-    public static ConverterStatusEnum EncodeAv1(string filePath, double bitRate, LibraryOptimizer.LibraryOptimizer optimizerSettings)
+    public static ConverterStatusEnum EncodeAv1(VideoInfo videoInfo)
     {
-        var fileConverter = new VideoInfo(filePath, bitRate, optimizerSettings);
-        var converted = fileConverter.EncodeAv1();
-        fileConverter.AppendMetadata();
+        videoInfo.SetVideoInfoCommandsWithAv1();
+        var converted = videoInfo.EncodeAv1();
+        videoInfo.AppendMetadata();
         
         return converted;
     }
@@ -315,4 +316,5 @@ public abstract class ConverterBackend
             ConsoleLog.WriteLine($"File not found, skipping delete: {filePath}");
         }
     }
+    
 }

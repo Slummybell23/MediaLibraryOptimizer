@@ -142,7 +142,8 @@ public class LibraryOptimizer
                     var inputFile = fileInfoEntry.FullName;
                     var commandFile = ConverterBackend.FileFormatToCommand(inputFile);
                     var videoInfo = new VideoInfo(inputFile, this);
-                    
+                    var fileInfo = videoInfo._inputFfmpegVideoInfo;
+
                     ConsoleLog.ResetLogText();
                     ConsoleLog.WriteLine($"Processing file: {inputFile}");
 
@@ -156,17 +157,10 @@ public class LibraryOptimizer
 
                     //Start timer to calculate time to convert file
                     var start = DateTime.Now;
-                
-                    var command = $"ffmpeg -i '{commandFile}' -hide_banner -loglevel info";
-                    var fileInfo = ConverterBackend.RunCommand(command, commandFile, false);
-
-                    var startBitRate = 0.0;
-                    var encodeCheckCommand = $"ffprobe -i '{commandFile}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
-
+                    
                     if (EncodeAv1 || EncodeHevc)
                     {
-                        var bitRateOutput = ConverterBackend.RunCommand(encodeCheckCommand, commandFile).Split().Last();
-                        startBitRate = double.Parse(bitRateOutput) / 1000000.0;
+                        videoInfo.SetInputBitrate();
                     }
                 
                     if (EncodeAv1)
@@ -174,55 +168,46 @@ public class LibraryOptimizer
                         //Check if file is not av1, and not dolby vision
                         if (ConverterBackend.CanEncodeAv1(fileInfo))
                         {
-                            converted = ConverterBackend.EncodeAv1(commandOutputFile, startBitRate, this);
-
-                            encodeCheckCommand = $"ffprobe -i '{commandOutputFile}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
-                            var bitRateOutput = ConverterBackend.RunCommand(encodeCheckCommand, commandOutputFile).Split().Last();
-                            var endBitRate = double.Parse(bitRateOutput) / 1000000.0;
-                    
-                            ConsoleLog.WriteLine($"Starting bitrate: {startBitRate} mbps");
-                            ConsoleLog.WriteLine($"Ending bitrate: {endBitRate} mbps");
+                            converted = ConverterBackend.EncodeAv1(videoInfo);
+                            
+                            ConsoleLog.WriteLine($"Starting bitrate: {videoInfo.GetInputBitrate()} mbps");
+                            ConsoleLog.WriteLine($"Ending bitrate: {videoInfo.GetOutputBitrate()} mbps");
                         }
                     }
-                    // if (RemuxDolbyVision && !EncodeHevc && converted == ConverterStatusEnum.NotConverted)
-                    // {
-                    //     if (ConverterBackend.IsProfile7(fileInfo))
-                    //     {
-                    //         ConsoleLog.WriteLine($"Dolby Vision Profile 7 detected in: {file}");
-                    //         
-                    //         converted = ConverterBackend.Remux(commandOutputFile, this);
-                    //     }
-                    // }
-                    // if (RemuxDolbyVision && EncodeHevc && converted == ConverterStatusEnum.NotConverted)
-                    // {
-                    //     if (ConverterBackend.IsProfile7(fileInfo))
-                    //     {
-                    //         ConsoleLog.WriteLine($"Dolby Vision Profile 7 detected in: {file}");
-                    //         
-                    //         converted = ConverterBackend.RemuxAndEncodeHevc(commandOutputFile, this);
-                    //     
-                    //         encodeCheckCommand = $"ffprobe -i '{commandOutputFile}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
-                    //         var bitRateOutput = ConverterBackend.RunCommand(encodeCheckCommand, outputPathFile).Split().Last();
-                    //         var endBitRate = double.Parse(bitRateOutput) / 1000000.0;
-                    //
-                    //         ConsoleLog.WriteLine($"Starting bitrate: {startBitRate} mbps");
-                    //         ConsoleLog.WriteLine($"Ending bitrate: {endBitRate} mbps");
-                    //     }
-                    // }
-                    // if (EncodeHevc && converted == ConverterStatusEnum.NotConverted)
-                    // {
-                    //     if (ConverterBackend.CanEncodeHevc(commandFile, fileInfo, startBitRate))
-                    //     {
-                    //         converted = ConverterBackend.EncodeHevc(commandOutputFile, this);
-                    //     
-                    //         encodeCheckCommand = $"ffprobe -i '{commandOutputFile}' -show_entries format=bit_rate -v quiet -of csv='p=0'";
-                    //         var bitRateOutput = ConverterBackend.RunCommand(encodeCheckCommand, outputPathFile).Split().Last();
-                    //         var endBitRate = double.Parse(bitRateOutput) / 1000000.0;
-                    //
-                    //         ConsoleLog.WriteLine($"Starting bitrate: {startBitRate} mbps");
-                    //         ConsoleLog.WriteLine($"Ending bitrate: {endBitRate} mbps");
-                    //     }
-                    // }
+                    if (RemuxDolbyVision && !EncodeHevc && converted == ConverterStatusEnum.NotConverted)
+                    {
+                        if (ConverterBackend.IsProfile7(fileInfo))
+                        {
+                            ConsoleLog.WriteLine($"Dolby Vision Profile 7 detected in: {inputFile}");
+                             
+                            converted = ConverterBackend.Remux(videoInfo);
+                            
+                            ConsoleLog.WriteLine($"Starting bitrate: {videoInfo.GetInputBitrate()} mbps");
+                            ConsoleLog.WriteLine($"Ending bitrate: {videoInfo.GetOutputBitrate()} mbps");
+                        }
+                    }
+                    if (RemuxDolbyVision && EncodeHevc && converted == ConverterStatusEnum.NotConverted)
+                    {
+                        if (ConverterBackend.IsProfile7(fileInfo))
+                        {
+                            ConsoleLog.WriteLine($"Dolby Vision Profile 7 detected in: {inputFile}");
+                             
+                            converted = ConverterBackend.RemuxAndEncodeHevc(videoInfo);
+                            
+                            ConsoleLog.WriteLine($"Starting bitrate: {videoInfo.GetInputBitrate()} mbps");
+                            ConsoleLog.WriteLine($"Ending bitrate: {videoInfo.GetOutputBitrate()} mbps");
+                        }
+                    }
+                    if (EncodeHevc && converted == ConverterStatusEnum.NotConverted)
+                    {
+                        if (ConverterBackend.CanEncodeHevc(commandFile, fileInfo, videoInfo.GetInputBitrate()))
+                        {
+                            converted = ConverterBackend.EncodeHevc(videoInfo);
+                         
+                            ConsoleLog.WriteLine($"Starting bitrate: {videoInfo.GetInputBitrate()} mbps");
+                            ConsoleLog.WriteLine($"Ending bitrate: {videoInfo.GetOutputBitrate()} mbps");
+                        }
+                    }
 
                     if (converted != ConverterStatusEnum.NotConverted)
                     {                            

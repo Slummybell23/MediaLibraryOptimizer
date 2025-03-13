@@ -1,14 +1,47 @@
 
+using System.Text.RegularExpressions;
 using LibraryOptimizer.Enums;
 
 namespace LibraryOptimizer;
 
 public class VideoInfo
 {
+    private LibraryOptimizer.LibraryOptimizer _optimizerSettings;
+    
+    private double _inputBitRate;
+
+    public double GetInputBitrate()
+    {
+        return _inputBitRate;
+    }
+
+    public void SetInputBitrate()
+    { 
+        _inputBitRate = ScanBitrate(_inputFfmpegVideoInfo);
+    }
+
+    private double _outputBitRate;
+
+    public double GetOutputBitrate()
+    {
+        return _outputBitRate;
+    }
+
+    public void SetOutputBitrate()
+    {
+        _outputBitRate = ScanBitrate(_outputFfmpegVideoInfo);
+    }
+    
+    public string _inputFfmpegVideoInfo;
+    public string _outputFfmpegVideoInfo;
+
     private string _inputFilePath;
     private string _commandInputFilePath;
     private string _commandOutputFile;
     private string _outputFile;
+
+    private long _inputFileSize;
+    private long _outputFileSize;
     
     private string _videoName;
     private string _profile8HevcFile;
@@ -30,23 +63,32 @@ public class VideoInfo
 
     private bool _converted;
     private string _failedReason = string.Empty;
-    
+    private string _commandVideoName;
+
     #region Constructors
 
     public VideoInfo(string inputFilePath, LibraryOptimizer.LibraryOptimizer optimizerSettings)
     {
+        _optimizerSettings = optimizerSettings;
         
-        //Initialize fields used by all checks
+        _inputFilePath = inputFilePath;
+        _commandInputFilePath = ConverterBackend.FileFormatToCommand(inputFilePath);
+        
+        var tempDirectory = Path.Combine(Path.GetDirectoryName(_inputFilePath)!, $"{_videoName}Incomplete");
+        _commandOutputFile = Path.Combine(Path.GetDirectoryName(tempDirectory)!, "converted_" + Path.GetFileName(_commandInputFilePath));
+        _outputFile = ConverterBackend.FileRemoveFormat(_commandOutputFile);
+        
+        var command = $"ffmpeg -i '{_commandInputFilePath}' -hide_banner -loglevel info";
+        _inputFfmpegVideoInfo = ConverterBackend.RunCommand(command, _commandInputFilePath, false);
     }
-    public void SetVideoInfoCommands(string inputFilePath, LibraryOptimizer.LibraryOptimizer optimizerSettings)
+    
+    public void SetVideoInfoCommands()
     {
-        SetVideoInfoPaths(inputFilePath);
-        //inputFilePath inserted here is already formated for commands
-        
+        SetVideoInfoPaths();
         
         //======================Dolby Vision 7 -> 8 Remuxing=============================
         //Copies the HEVC stream of the mkv container to a seperate hevc file.
-        _extractCommand = $"ffmpeg -i '{inputFilePath}' -map 0:v:0 -c copy '{_hevcFile}'";
+        _extractCommand = $"ffmpeg -i '{_commandInputFilePath}' -map 0:v:0 -c copy '{_hevcFile}'";
 
         //Converts the hevc file from Dolby Vision Profile 7 to Dolby Vision Profile 8.
         _convertCommand = $"dovi_tool -m 2 convert -i '{_hevcFile}' -o '{_profile8HevcFile}'";
@@ -58,111 +100,93 @@ public class VideoInfo
         _injectRpu = $"dovi_tool inject-rpu -i '{_encodedHevc}' -r '{_rpuFile}' -o '{_encodedProfile8HevcFile}'";
         
         //Remuxes the hevc file into new mkv container, overriding the original video stream with new encoded and/or converted hevc file.
-        _remuxCommandEncoded = $"mkvmerge -o '{_commandOutputFile}' -D '{inputFilePath}' '{_encodedProfile8HevcFile}'";
-        _remuxCommand = $"mkvmerge -o '{_commandOutputFile}' -D '{inputFilePath}' '{_profile8HevcFile}'";
+        _remuxCommandEncoded = $"mkvmerge -o '{_commandOutputFile}' -D '{_commandInputFilePath}' '{_encodedProfile8HevcFile}'";
+        _remuxCommand = $"mkvmerge -o '{_commandOutputFile}' -D '{_commandInputFilePath}' '{_profile8HevcFile}'";
         //======================Dolby Vision 7 -> 8 Remuxing=============================
         
-        if(optimizerSettings.IsNvidia)
+        if(_optimizerSettings.IsNvidia)
             //NVIDIA NVENC
             _reEncodeHevcProfile8Command = $"ffmpeg -i '{_hevcFile}' -c:v hevc_nvenc -preset p7 -cq 3 -c:a copy '{_encodedHevc}'";
         else
             //INTEL ARC
             _reEncodeHevcProfile8Command = $"ffmpeg -i '{_hevcFile}' -c:v hevc_qsv -preset 1 -global_quality 3 -c:a copy '{_encodedHevc}'";
-
-        
-        //Remove formatting for deleting.
-        _inputFilePath = ConverterBackend.FileRemoveFormat(inputFilePath);
-        _outputFile = ConverterBackend.FileRemoveFormat(_commandOutputFile);
-        
-        _videoName = Path.GetFileNameWithoutExtension(_inputFilePath);
-        directory = Path.GetDirectoryName(_inputFilePath)!;
-        _hevcFile = Path.Combine(directory, $"{_videoName}hevc.hevc");
-        
-        _profile8HevcFile = Path.Combine(directory, $"{_videoName}profile8hevc.hevc");
-        _rpuFile = Path.Combine(directory, $"{_videoName}rpu.bin");
-        _encodedHevc = Path.Combine(directory, $"{_videoName}encodedHevc.hevc");
-        _encodedProfile8HevcFile = Path.Combine(directory, $"{_videoName}profile8encodedhevc.hevc");
         
         //Generate Temp Folder
         CreateTempFolder();
     }
 
-    private void SetVideoInfoPaths(string inputFilePath)
-    {
-        _inputFilePath = inputFilePath;
-        _commandInputFilePath = ConverterBackend.FileFormatToCommand(inputFilePath);
-        
+    private void SetVideoInfoPaths()
+    { 
         //Build file names (with directory path attatched)
-        _videoName = Path.GetFileNameWithoutExtension(inputFilePath);
-        var directory = Path.GetDirectoryName(inputFilePath)!;
-        _hevcFile = Path.Combine(directory, $"{_videoName}hevc.hevc");
+        _videoName = Path.GetFileNameWithoutExtension(_inputFilePath);
+        _commandVideoName = Path.GetFileNameWithoutExtension(_commandInputFilePath);
         
-        _profile8HevcFile = Path.Combine(directory, $"{_videoName}profile8hevc.hevc");
-        _rpuFile = Path.Combine(directory, $"{_videoName}rpu.bin");
-        _encodedHevc = Path.Combine(directory, $"{_videoName}encodedHevc.hevc");
-        _encodedProfile8HevcFile = Path.Combine(directory, $"{_videoName}profile8encodedhevc.hevc");
+        var directory = Path.GetDirectoryName(_inputFilePath)!;
+        _hevcFile = Path.Combine(directory, $"{_commandVideoName}hevc.hevc");
         
-        _commandOutputFile = Path.Combine(Path.GetDirectoryName(_commandInputFilePath)!, "converted_" + Path.GetFileName(inputFilePath));
+        _profile8HevcFile = Path.Combine(directory, $"{_commandVideoName}profile8hevc.hevc");
+        _rpuFile = Path.Combine(directory, $"{_commandVideoName}rpu.bin");
+        _encodedHevc = Path.Combine(directory, $"{_commandVideoName}encodedHevc.hevc");
+        _encodedProfile8HevcFile = Path.Combine(directory, $"{_commandVideoName}profile8encodedhevc.hevc");
+        
+        _hevcFile = Path.Combine(directory, $"{_commandVideoName}hevc.hevc");
+        
+        _profile8HevcFile = Path.Combine(directory, $"{_commandVideoName}profile8hevc.hevc");
+        _rpuFile = Path.Combine(directory, $"{_commandVideoName}rpu.bin");
+        _encodedHevc = Path.Combine(directory, $"{_commandVideoName}encodedHevc.hevc");
+        _encodedProfile8HevcFile = Path.Combine(directory, $"{_commandVideoName}profile8encodedhevc.hevc");
     }
 
     //AV1
-    public void SetVideoInfoCommands(string inputFilePath, double bitRate, LibraryOptimizer.LibraryOptimizer optimizerSettings)
+    public void SetVideoInfoCommandsWithAv1()
     {
-        SetVideoInfoCommands(inputFilePath, optimizerSettings);
-        if (optimizerSettings.IsNvidia)
+        SetVideoInfoCommands();
+        
+        if (_optimizerSettings.IsNvidia)
         {
             //NVIDIA NVENC
-            if (bitRate >= 12)
+            if (_inputBitRate >= 12)
             {
-                _encodeAv1Command = $"ffmpeg -i '{inputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 25 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 25 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
-            else if (bitRate <= 12 && bitRate >= 7)
+            else if (_inputBitRate <= 12 && _inputBitRate >= 7)
             {
-                _encodeAv1Command = $"ffmpeg -i '{inputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 29 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 29 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
-            else if (bitRate <= 7)
+            else if (_inputBitRate <= 7)
             {
-                _encodeAv1Command = $"ffmpeg -i '{inputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 32 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 32 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
         }
         else
         {
             //INTEL ARC
-            if (optimizerSettings.Quality == QualityEnum.NearLossless)
+            if (_optimizerSettings.Quality == QualityEnum.NearLossless)
             {
-                _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{inputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 1 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 1 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
-            else if (bitRate >= 50 && (optimizerSettings.Quality == QualityEnum.HighQuality))
+            else if (_inputBitRate >= 50 && (_optimizerSettings.Quality == QualityEnum.HighQuality))
             {
-                _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{inputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 1 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 1 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
-            else if (bitRate <= 50 && bitRate >= 31 && (optimizerSettings.Quality == QualityEnum.HighQuality))
+            else if (_inputBitRate <= 50 && _inputBitRate >= 31 && (_optimizerSettings.Quality == QualityEnum.HighQuality))
             {
-                _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{inputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 5 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 5 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
-            else if (bitRate <= 31 && bitRate >= 11 
-                     || (bitRate >= 11 && (optimizerSettings.Quality == QualityEnum.Balanced)))
+            else if (_inputBitRate <= 31 && _inputBitRate >= 11 
+                     || (_inputBitRate >= 11 && (_optimizerSettings.Quality == QualityEnum.Balanced)))
             {
-                _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{inputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 20 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 20 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
-            else if (bitRate <= 11 && bitRate >= 6)
+            else if (_inputBitRate <= 11 && _inputBitRate >= 6)
             {
-                _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{inputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 21 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 21 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
-            else if (bitRate <= 6)
+            else if (_inputBitRate <= 6)
             {
-                _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{inputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 22 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+                _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 22 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
         }
-    }
-    
-    private void CreateTempFolder()
-    {
-        var tempDirectory = Path.Combine(Path.GetDirectoryName(_inputFilePath)!, $"{_videoName}Incomplete");
-        var plexIgnoreFile = Path.Combine(tempDirectory, ".plexIgnore");
-
-        Directory.CreateDirectory(tempDirectory);
-        File.Create(plexIgnoreFile);
     }
 
     #endregion
@@ -171,7 +195,6 @@ public class VideoInfo
 
     public ConverterStatusEnum RemuxAndEncodeHevc()
     {
-        //Runs command sequence
         try
         {
             ConsoleLog.WriteLine($"Extracting HEVC stream: {_extractCommand}");
@@ -179,13 +202,11 @@ public class VideoInfo
 
             ConsoleLog.WriteLine($"Converting to Profile 8: {_convertCommand}");
             ConverterBackend.RunCommand(_convertCommand, _inputFilePath);
-            
-            ConsoleLog.WriteLine($"Re Encoding {_videoName}");
+
             ConsoleLog.WriteLine($"Extracting RPU: {_extractProfile8RpuCommand}");
             ConverterBackend.RunCommand(_extractProfile8RpuCommand, _inputFilePath);
 
             ConsoleLog.WriteLine($"Encoding HEVC: {_reEncodeHevcProfile8Command}");
-            
             var failedOutput = string.Empty;
             try
             {
@@ -197,33 +218,21 @@ public class VideoInfo
                 throw;
             }
             
-            ConverterBackend.DeleteFile(_profile8HevcFile);
-
             ConsoleLog.WriteLine($"Injecting RPU: {_injectRpu}");
             ConverterBackend.RunCommand(_injectRpu, _inputFilePath);
-            ConverterBackend.DeleteFile(_rpuFile);
-            ConverterBackend.DeleteFile(_encodedHevc);
             
             ConsoleLog.WriteLine($"Remuxing Encoded to MKV: {_remuxCommandEncoded}");
             ConverterBackend.RunCommand(_remuxCommandEncoded, _inputFilePath);
             
-            var oldFileSize = new FileInfo(_inputFilePath).Length/1000000;
-            var newFileSize = new FileInfo(_outputFile).Length/1000000;
+            SetFileSizes();
 
-            ConsoleLog.WriteLine($"Old file size: {oldFileSize} mb");
-            ConsoleLog.WriteLine($"New file size: {newFileSize} mb");
-        
-            if (newFileSize > oldFileSize)
+            if (_outputFileSize > _inputFileSize)
             {
                 ConsoleLog.WriteLine("Encoded file larger than original file. Deleting encoded file.");
                 ConverterBackend.DeleteFile(_outputFile);
             }
             else
             {
-                ConverterBackend.DeleteFile(_inputFilePath);
-                ConverterBackend.DeleteFile(_encodedProfile8HevcFile);
-                ConverterBackend.DeleteFile(_hevcFile);
-                
                 //Renames new mkv container to the original file and deletes original file.
                 File.Move(_outputFile, _inputFilePath, true);
 
@@ -235,10 +244,7 @@ public class VideoInfo
 
             ConsoleLog.WriteLine($"Remuxing Non Encoded to MKV: {_remuxCommand}");
             ConverterBackend.RunCommand(_remuxCommand, _inputFilePath);
-            
-            ConverterBackend.DeleteFile(_encodedProfile8HevcFile);
-            
-            ConverterBackend.DeleteFile(_hevcFile);
+
             //Renames new mkv container to the original file and deletes original file.
             File.Move(_outputFile, _inputFilePath, true);
 
@@ -266,10 +272,9 @@ public class VideoInfo
             ConverterBackend.DeleteFile(_outputFile);
         }
     }
-    
+
     public ConverterStatusEnum Remux()
     {
-        //Runs command sequence
         try
         {
             ConsoleLog.WriteLine($"Extracting HEVC stream: {_extractCommand}");
@@ -280,8 +285,7 @@ public class VideoInfo
             
             ConsoleLog.WriteLine($"Remuxing to MKV: {_remuxCommand}");
             ConverterBackend.RunCommand(_remuxCommand, _inputFilePath);
-            ConverterBackend.DeleteFile(_hevcFile);
-            
+
             //Renames new mkv container to the original file and deletes original file.
             File.Move(_outputFile, _inputFilePath, true);
 
@@ -309,7 +313,6 @@ public class VideoInfo
     
     public ConverterStatusEnum EncodeHevc()
     {
-        //Runs command sequence
         try
         {
             ConsoleLog.WriteLine($"Extracting HEVC stream: {_extractCommand}");
@@ -319,7 +322,6 @@ public class VideoInfo
             ConverterBackend.RunCommand(_extractProfile8RpuCommand, _inputFilePath);
 
             ConsoleLog.WriteLine($"Encoding HEVC: {_reEncodeHevcProfile8Command}");
-
             var failedOutput = string.Empty;
             try
             {
@@ -331,25 +333,15 @@ public class VideoInfo
                 throw;
             }
             
-            ConverterBackend.DeleteFile(_profile8HevcFile);
-
             ConsoleLog.WriteLine($"Injecting RPU: {_injectRpu}");
             ConverterBackend.RunCommand(_injectRpu, _inputFilePath);
-            ConverterBackend.DeleteFile(_rpuFile);
-            ConverterBackend.DeleteFile(_encodedHevc);
-            
+
             ConsoleLog.WriteLine($"Remuxing to MKV: {_remuxCommandEncoded}");
             ConverterBackend.RunCommand(_remuxCommandEncoded, _inputFilePath);
-            ConverterBackend.DeleteFile(_encodedProfile8HevcFile);
-            ConverterBackend.DeleteFile(_hevcFile);
             
-            var oldFileSize = new FileInfo(_inputFilePath).Length/1000000;
-            var newFileSize = new FileInfo(_outputFile).Length/1000000;
-
-            ConsoleLog.WriteLine($"Old file size: {oldFileSize} mb");
-            ConsoleLog.WriteLine($"New file size: {newFileSize} mb");
+            SetFileSizes();
             
-            if (newFileSize > oldFileSize)
+            if (_outputFileSize > _inputFileSize)
             {
                 ConsoleLog.WriteLine("Encoded file larger than original file. Deleting encoded file.");
                 ConverterBackend.DeleteFile(_outputFile);
@@ -396,14 +388,10 @@ public class VideoInfo
         {
             ConsoleLog.WriteLine($"Re Encoding {_videoName} To AV1: {_encodeAv1Command}");
             ConverterBackend.RunCommand(_encodeAv1Command, _inputFilePath);
-
-            var oldFileSize = new FileInfo(_inputFilePath).Length/1000000;
-            var newFileSize = new FileInfo(_outputFile).Length/1000000;
-
-            ConsoleLog.WriteLine($"Old file size: {oldFileSize} mb");
-            ConsoleLog.WriteLine($"New file size: {newFileSize} mb");
-
-            if (newFileSize > oldFileSize)
+            
+            SetFileSizes();
+            
+            if (_outputFileSize > _inputFileSize)
             {
                 ConsoleLog.WriteLine("Encoded file larger than original file. Deleting encoded file.");
                 ConverterBackend.DeleteFile(_outputFile);
@@ -438,6 +426,32 @@ public class VideoInfo
 
     #endregion
 
+    private void SetFileSizes()
+    {
+        _inputFileSize = new FileInfo(_inputFilePath).Length/1000000;
+        _outputFileSize = new FileInfo(_outputFile).Length/1000000;
+
+        ConsoleLog.WriteLine($"Old file size: {_inputFileSize} mb");
+        ConsoleLog.WriteLine($"New file size: {_outputFileSize} mb");
+    }
+    
+    private void CreateTempFolder()
+    {
+        var tempDirectory = Path.Combine(Path.GetDirectoryName(_inputFilePath)!, $"{_videoName}Incomplete");
+        var plexIgnoreFile = Path.Combine(tempDirectory, ".plexIgnore");
+
+        Directory.CreateDirectory(tempDirectory);
+        File.Create(plexIgnoreFile);
+    }
+    
+    private double ScanBitrate(string ffmpegFileInfo)
+    {
+        var regex = new Regex("(bitrate:)(\\s)(\\d)*");
+
+        var match = regex.Match(ffmpegFileInfo);
+        return double.Parse(match.Value) / 1000000.0;
+    }
+    
     public void AppendMetadata()
     {
         var directory = Path.GetDirectoryName(_inputFilePath)!;
