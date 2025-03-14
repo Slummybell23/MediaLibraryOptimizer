@@ -124,7 +124,7 @@ public class VideoInfo
         _videoName = Path.GetFileNameWithoutExtension(_inputFilePath);
         _commandVideoName = Path.GetFileNameWithoutExtension(_commandInputFilePath);
         
-        var directory = Path.GetDirectoryName(_tempDirectory)!;
+        var directory = _tempDirectory;
         _hevcFile = Path.Combine(directory, $"{_commandVideoName}hevc.hevc");
         
         _profile8HevcFile = Path.Combine(directory, $"{_commandVideoName}profile8hevc.hevc");
