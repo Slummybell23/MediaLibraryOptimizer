@@ -35,10 +35,13 @@ public class VideoInfo
     public string _inputFfmpegVideoInfo;
     public string _outputFfmpegVideoInfo;
 
+    private ConverterStatusEnum _converterStatusEnum = ConverterStatusEnum.NotConverted;
+    
     private string _inputFilePath;
     private string _commandInputFilePath;
     private string _commandOutputFile;
     private string _outputFile;
+    private string _tempDirectory;
 
     private long _inputFileSize;
     private long _outputFileSize;
@@ -61,7 +64,7 @@ public class VideoInfo
     private string _remuxCommandEncoded;
     private string _remuxCommand;
 
-    private bool _converted;
+    //private bool _converted;
     private string _failedReason = string.Empty;
     private string _commandVideoName;
 
@@ -74,8 +77,8 @@ public class VideoInfo
         _inputFilePath = inputFilePath;
         _commandInputFilePath = ConverterBackend.FileFormatToCommand(inputFilePath);
         
-        var tempDirectory = Path.Combine(Path.GetDirectoryName(_inputFilePath)!, $"{_videoName}Incomplete");
-        _commandOutputFile = Path.Combine(Path.GetDirectoryName(tempDirectory)!, "converted_" + Path.GetFileName(_commandInputFilePath));
+        _tempDirectory = Path.Combine(Path.GetDirectoryName(_inputFilePath)!, $"{_videoName}Incomplete");
+        _commandOutputFile = Path.Combine(_tempDirectory, "converted_" + Path.GetFileName(_commandInputFilePath));
         _outputFile = ConverterBackend.FileRemoveFormat(_commandOutputFile);
         
         var command = $"ffmpeg -i '{_commandInputFilePath}' -hide_banner -loglevel info";
@@ -234,11 +237,11 @@ public class VideoInfo
             else
             {
                 //Renames new mkv container to the original file and deletes original file.
-                File.Move(_outputFile, _inputFilePath, true);
+                //File.Move(_outputFile, _inputFilePath, true);
 
                 ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
 
-                _converted = true;
+                _converterStatusEnum = ConverterStatusEnum.Success;
                 return ConverterStatusEnum.Success;
             }
 
@@ -246,30 +249,19 @@ public class VideoInfo
             ConverterBackend.RunCommand(_remuxCommand, _inputFilePath);
 
             //Renames new mkv container to the original file and deletes original file.
-            File.Move(_outputFile, _inputFilePath, true);
+            //File.Move(_outputFile, _inputFilePath, true);
 
             ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
             
-            _converted = true;
+            _converterStatusEnum = ConverterStatusEnum.Success;
             return ConverterStatusEnum.Success;
         }
         catch (Exception ex)
         {
             ConsoleLog.WriteLine($"Error during conversion: {ex.Message}");
             
-            _converted = false;
+            _converterStatusEnum = ConverterStatusEnum.Failed;
             return ConverterStatusEnum.Failed;
-        }
-        finally
-        {
-            //No matter what, if a fail occurs or if a success, always clear out files generated during script runs.
-            ConsoleLog.WriteLine("Cleaning up temporary files...");
-            ConverterBackend.DeleteFile(_hevcFile);
-            ConverterBackend.DeleteFile(_profile8HevcFile);
-            ConverterBackend.DeleteFile(_encodedProfile8HevcFile);
-            ConverterBackend.DeleteFile(_rpuFile);
-            ConverterBackend.DeleteFile(_encodedHevc);
-            ConverterBackend.DeleteFile(_outputFile);
         }
     }
 
@@ -287,27 +279,19 @@ public class VideoInfo
             ConverterBackend.RunCommand(_remuxCommand, _inputFilePath);
 
             //Renames new mkv container to the original file and deletes original file.
-            File.Move(_outputFile, _inputFilePath, true);
+            //File.Move(_outputFile, _inputFilePath, true);
 
             ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
             
-            _converted = true;
+            _converterStatusEnum = ConverterStatusEnum.Success;
             return ConverterStatusEnum.Success;
         }
         catch (Exception ex)
         {
             ConsoleLog.WriteLine($"Error during conversion: {ex.Message}");
             
-            _converted = false;
+            _converterStatusEnum = ConverterStatusEnum.Failed;
             return ConverterStatusEnum.Failed;
-        }
-        finally
-        {
-            //No matter what, if a fail occurs or if a success, always clear out files generated during script runs.
-            ConsoleLog.WriteLine("Cleaning up temporary files...");
-            ConverterBackend.DeleteFile(_hevcFile);
-            ConverterBackend.DeleteFile(_profile8HevcFile);
-            ConverterBackend.DeleteFile(_outputFile);
         }
     }
     
@@ -347,37 +331,26 @@ public class VideoInfo
                 ConverterBackend.DeleteFile(_outputFile);
 
                 _failedReason = "Output file larger than input.";
-                _converted = false;
+                _converterStatusEnum = ConverterStatusEnum.Failed;
                 return ConverterStatusEnum.Failed;
             }
             else
             {
                 //Renames new mkv container to the original file and deletes original file.
-                File.Move(_outputFile, _inputFilePath, true);
+                //File.Move(_outputFile, _inputFilePath, true);
 
                 ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
             }
 
-            _converted = true;
+            _converterStatusEnum = ConverterStatusEnum.Success;
             return ConverterStatusEnum.Success;
         }
         catch (Exception ex)
         {
             ConsoleLog.WriteLine($"Error during conversion: {ex.Message}");
 
-            _converted = false;
+            _converterStatusEnum = ConverterStatusEnum.Failed;
             return ConverterStatusEnum.Failed;
-        }
-        finally
-        {
-            //No matter what, if a fail occurs or if a success, always clear out files generated during script runs.
-            ConsoleLog.WriteLine("Cleaning up temporary files...");
-            ConverterBackend.DeleteFile(_hevcFile);
-            ConverterBackend.DeleteFile(_profile8HevcFile);
-            ConverterBackend.DeleteFile(_encodedProfile8HevcFile);
-            ConverterBackend.DeleteFile(_rpuFile);
-            ConverterBackend.DeleteFile(_encodedHevc);
-            ConverterBackend.DeleteFile(_outputFile);
         }
     }
     
@@ -397,30 +370,26 @@ public class VideoInfo
                 ConverterBackend.DeleteFile(_outputFile);
 
                 _failedReason = "Output file larger than input.";
-                _converted = false;
+                _converterStatusEnum = ConverterStatusEnum.Failed;
                 return ConverterStatusEnum.Failed;
             }
             else
             {
                 //Renames new mkv container to the original file and deletes original file.
-                File.Move(_outputFile, _inputFilePath, true);
+                //File.Move(_outputFile, _inputFilePath, true);
 
                 ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
             }
 
-            _converted = true;
+            _converterStatusEnum = ConverterStatusEnum.Success;
             return ConverterStatusEnum.Success;
         }
         catch (Exception ex)
         {
             ConsoleLog.WriteLine($"Error during conversion: {ex.Message}");
 
-            _converted = false;
+            _converterStatusEnum = ConverterStatusEnum.Failed;
             return ConverterStatusEnum.Failed;
-        }
-        finally
-        {
-            ConverterBackend.DeleteFile(_outputFile);
         }
     }
 
@@ -437,10 +406,12 @@ public class VideoInfo
     
     private void CreateTempFolder()
     {
-        var tempDirectory = Path.Combine(Path.GetDirectoryName(_inputFilePath)!, $"{_videoName}Incomplete");
-        var plexIgnoreFile = Path.Combine(tempDirectory, ".plexIgnore");
+        var plexIgnoreFile = Path.Combine(_tempDirectory, ".plexIgnore");
 
-        Directory.CreateDirectory(tempDirectory);
+        if(Directory.Exists(_tempDirectory))
+            Directory.Delete(_tempDirectory,true);
+        
+        Directory.CreateDirectory(_tempDirectory);
         File.Create(plexIgnoreFile);
     }
     
@@ -450,24 +421,38 @@ public class VideoInfo
 
         var match = regex.Match(ffmpegFileInfo);
         var parsed = match.Value.Split("bitrate:")[1].Trim();
-        return double.Parse(parsed) / 1000000.0;
+        return double.Parse(parsed);
     }
-    
+
     public void AppendMetadata()
     {
-        var directory = Path.GetDirectoryName(_inputFilePath)!;
-        var customMetadataFile = Path.Combine(directory, $"{_videoName}Metadata.mkv");
+        var fileToBuildMetadata = _inputFilePath;
+        var command = $"ffmpeg -i '{_commandInputFilePath}' -hide_banner -loglevel info";
+        var converted = false;
+        if (_converterStatusEnum != ConverterStatusEnum.Failed)
+        {
+            command = $"ffmpeg -i '{_commandOutputFile}' -hide_banner -loglevel info";
+            fileToBuildMetadata = _outputFile;
+            converted = true;
+        }
+
+        _outputFfmpegVideoInfo = ConverterBackend.RunCommand(command, _commandOutputFile, false);
+        
+        var directory = Path.GetDirectoryName(fileToBuildMetadata)!;
+        var customMetadataFile = Path.Combine(directory, $"converted {_videoName}Metadata.mkv");
 
         customMetadataFile = ConverterBackend.FileFormatToCommand(customMetadataFile);
-        var insertMetadataCommand = $"ffmpeg -i '{_commandInputFilePath}' -map 0 -c:v copy -c:a copy -c:s copy -metadata LIBRARY_OPTIMIZER_APP='Converted={_converted}. Reason={_failedReason}' '{customMetadataFile}'";
+        var insertMetadataCommand = $"ffmpeg -i '{_commandInputFilePath}' -map 0 -c:v copy -c:a copy -c:s copy -metadata LIBRARY_OPTIMIZER_APP='Converted={converted}. Reason={_failedReason}' '{customMetadataFile}'";
         customMetadataFile = ConverterBackend.FileRemoveFormat(customMetadataFile);
         
         var failOutput = string.Empty;
         try
         {
-            ConsoleLog.WriteLine($"Inserting metadata 'LIBRARY_OPTIMIZER_APP=Converted={_converted}. Reason={_failedReason}' into {_inputFilePath}");
+            ConsoleLog.WriteLine($"Inserting metadata 'LIBRARY_OPTIMIZER_APP=Converted={converted}. Reason={_failedReason}' into {_inputFilePath}");
             failOutput = ConverterBackend.RunCommand(insertMetadataCommand, _inputFilePath, false);
             
+            ConsoleLog.WriteLine("Writing file to original path...");
+            ConsoleLog.WriteLine("DO NOT TURN OFF PROGRAM");
             File.Move(customMetadataFile, _inputFilePath, true);
         }
         catch
@@ -475,5 +460,8 @@ public class VideoInfo
             ConsoleLog.WriteLine($"Metadata fail: {failOutput}");
             ConsoleLog.WriteLine("Appending metadata failed. Continuing...");
         }
+        
+        if(Directory.Exists(_tempDirectory))
+            Directory.Delete(_tempDirectory,true);
     }
 }

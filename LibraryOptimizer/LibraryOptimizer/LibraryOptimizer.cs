@@ -211,7 +211,7 @@ public class LibraryOptimizer
 
                     if (converted != ConverterStatusEnum.NotConverted)
                     {                            
-                        ConsoleLog.WriteLine("Processing done. Moving output file to library... /n DO NOT TURN OFF PROGRAM DURING THIS");
+                        //ConsoleLog.WriteLine("Processing done. Moving output file to library... /n DO NOT TURN OFF PROGRAM DURING THIS");
 
                         if (converted == ConverterStatusEnum.Success)
                         {
