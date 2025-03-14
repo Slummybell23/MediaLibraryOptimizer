@@ -45,26 +45,33 @@ public abstract class ConverterBackend
 
     #region File Operation Checks
 
-    public static bool ShouldBeProcessed(string filePath, bool retryFailed)
+    public static bool ShouldBeProcessed(VideoInfo videoInfo, bool retryFailed)
     {
-        var grabMetadataCommand = $"ffprobe -i '{filePath}' -show_entries format_tags=LIBRARY_OPTIMIZER_APP -of default=noprint_wrappers=1";
-        
-        var metadataOrFail = string.Empty;
-        try
-        {
-            metadataOrFail = RunCommand(grabMetadataCommand, filePath, false);
-        }
-        catch(Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-            
-            return false;
-        } 
+        //var grabMetadataCommand = $"ffprobe -i '{filePath}' -show_entries format_tags=LIBRARY_OPTIMIZER_APP -of default=noprint_wrappers=1";
 
-        if (metadataOrFail.Contains("Converted=True.")
-            || (metadataOrFail.Contains("Converted=False.") && !retryFailed))
+        var regex = new Regex("(LIBRARY_OPTIMIZER_APP:)(.*)");
+        var match = regex.Match(videoInfo._inputFfmpegVideoInfo);
+
+        var value = match.Value;
+        //var metadataOrFail = string.Empty;
+        //try
+        //{
+        //    metadataOrFail = RunCommand(grabMetadataCommand, filePath, false);
+        //}
+        //catch(Exception ex)
+        //{
+        //    Console.WriteLine(ex.Message);
+            
+        //    return false;
+        //}
+
+        if (String.IsNullOrEmpty(match.Value))
+            return true;
+        
+        if (value.Contains("Converted=True.")
+            || (value.Contains("Converted=False.") && !retryFailed))
             return false;
-        if (metadataOrFail.Contains("Converted=False.") && retryFailed)
+        if (value.Contains("Converted=False.") && retryFailed)
             return true;
         
         return true;
