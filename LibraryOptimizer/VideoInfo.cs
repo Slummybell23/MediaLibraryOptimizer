@@ -437,6 +437,7 @@ public class VideoInfo
         }
 
         _outputFfmpegVideoInfo = ConverterBackend.RunCommand(command, _commandOutputFile, false);
+        SetOutputBitrate();
         
         var directory = Path.GetDirectoryName(fileToBuildMetadata)!;
         var customMetadataFile = Path.Combine(directory, $"converted {_videoName}Metadata.mkv");
