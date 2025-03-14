@@ -42,6 +42,7 @@ public class VideoInfo
     private string _commandOutputFile;
     private string _outputFile;
     private string _tempDirectory;
+    private string _commandTempDirectory;
 
     private long _inputFileSize;
     private long _outputFileSize;
@@ -78,7 +79,9 @@ public class VideoInfo
         _commandInputFilePath = ConverterBackend.FileFormatToCommand(inputFilePath);
         
         _tempDirectory = Path.Combine(Path.GetDirectoryName(_inputFilePath)!, $"{_videoName}Incomplete");
-        _commandOutputFile = Path.Combine(_tempDirectory, "converted_" + Path.GetFileName(_commandInputFilePath));
+        _commandTempDirectory = ConverterBackend.FileFormatToCommand(_tempDirectory);
+        
+        _commandOutputFile = Path.Combine(_commandTempDirectory, "converted_" + Path.GetFileName(_commandInputFilePath));
         _outputFile = ConverterBackend.FileRemoveFormat(_commandOutputFile);
         
         var command = $"ffmpeg -i '{_commandInputFilePath}' -hide_banner -loglevel info";
@@ -124,7 +127,7 @@ public class VideoInfo
         _videoName = Path.GetFileNameWithoutExtension(_inputFilePath);
         _commandVideoName = Path.GetFileNameWithoutExtension(_commandInputFilePath);
         
-        var directory = _tempDirectory;
+        var directory = _commandTempDirectory;
         _hevcFile = Path.Combine(directory, $"{_commandVideoName}hevc.hevc");
         
         _profile8HevcFile = Path.Combine(directory, $"{_commandVideoName}profile8hevc.hevc");
@@ -450,6 +453,7 @@ public class VideoInfo
         try
         {
             ConsoleLog.WriteLine($"Inserting metadata 'LIBRARY_OPTIMIZER_APP=Converted={converted}. Reason={_failedReason}' into {_inputFilePath}");
+            ConsoleLog.WriteLine(insertMetadataCommand);
             failOutput = ConverterBackend.RunCommand(insertMetadataCommand, _inputFilePath, false);
             
             ConsoleLog.WriteLine("Writing file to original path...");

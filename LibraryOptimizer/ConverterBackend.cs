@@ -316,5 +316,4 @@ public abstract class ConverterBackend
             ConsoleLog.WriteLine($"File not found, skipping delete: {filePath}");
         }
     }
-    
 }
