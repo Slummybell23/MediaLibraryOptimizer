@@ -406,7 +406,7 @@ public class VideoInfo
     
     private void CreateTempFolder()
     {
-        var plexIgnoreFile = Path.Combine(_tempDirectory, ".plexIgnore");
+        var plexIgnoreFile = Path.Combine(_tempDirectory, ".plexignore");
 
         if(Directory.Exists(_tempDirectory))
             Directory.Delete(_tempDirectory,true);
