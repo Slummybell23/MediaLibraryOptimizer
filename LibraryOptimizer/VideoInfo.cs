@@ -456,7 +456,7 @@ public class VideoInfo
             
             ConsoleLog.WriteLine("Writing file to original path...");
             ConsoleLog.WriteLine("DO NOT TURN OFF PROGRAM");
-            File.Move(customMetadataFile, _inputFilePath, true);
+            File.Move(ConverterBackend.FileRemoveFormat(customMetadataFile), _inputFilePath, true);
         }
         catch
         {
