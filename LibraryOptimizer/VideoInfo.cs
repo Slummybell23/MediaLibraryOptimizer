@@ -457,7 +457,7 @@ public class VideoInfo
         SafeDeleteDirectory(_tempDirectory);
     }
     
-    private void SafeDeleteDirectory(string path, int retries = 5, int delay = 500)
+    private void SafeDeleteDirectory(string path, int retries = 5, int delay = 2000)
     {
         for (int i = 0; i < retries; i++)
         {
@@ -469,15 +469,12 @@ public class VideoInfo
                 }
                 return;
             }
-            catch (IOException)
-            {
-                Thread.Sleep(delay);
-            }
-            catch (UnauthorizedAccessException)
+            catch
             {
                 Thread.Sleep(delay);
             }
         }
+        
         throw new IOException($"Failed to delete directory {path} after multiple attempts.");
     }
 }
