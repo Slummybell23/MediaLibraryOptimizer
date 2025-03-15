@@ -443,7 +443,7 @@ public class VideoInfo
         SetOutputBitrate();
         
         var directory = Path.GetDirectoryName(fileToBuildMetadata)!;
-        var customMetadataFile = Path.Combine(directory, $"converted {_videoName}Metadata.mkv");
+        var customMetadataFile = Path.Combine(directory, $"converted {_commandVideoName}Metadata.mkv");
 
         var insertMetadataCommand = $"ffmpeg -i '{fileToBuildMetadata}' -map 0 -c:v copy -c:a copy -c:s copy -metadata LIBRARY_OPTIMIZER_APP='Converted={converted}. Reason={_failedReason}' '{customMetadataFile}'";
         
