@@ -445,9 +445,7 @@ public class VideoInfo
         var directory = Path.GetDirectoryName(fileToBuildMetadata)!;
         var customMetadataFile = Path.Combine(directory, $"converted {_videoName}Metadata.mkv");
 
-        customMetadataFile = ConverterBackend.FileFormatToCommand(customMetadataFile);
         var insertMetadataCommand = $"ffmpeg -i '{fileToBuildMetadata}' -map 0 -c:v copy -c:a copy -c:s copy -metadata LIBRARY_OPTIMIZER_APP='Converted={converted}. Reason={_failedReason}' '{customMetadataFile}'";
-        customMetadataFile = ConverterBackend.FileRemoveFormat(customMetadataFile);
         
         var failOutput = string.Empty;
         try
