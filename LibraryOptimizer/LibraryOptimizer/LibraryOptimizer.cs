@@ -170,8 +170,8 @@ public class LibraryOptimizer
                         {
                             converted = ConverterBackend.EncodeAv1(videoInfo);
                             
-                            ConsoleLog.WriteLine($"Starting bitrate: {videoInfo.GetInputBitrate()} mbps");
-                            ConsoleLog.WriteLine($"Ending bitrate: {videoInfo.GetOutputBitrate()} mbps");
+                            ConsoleLog.WriteLine($"Starting bitrate: {videoInfo.GetInputBitrate()} kbps");
+                            ConsoleLog.WriteLine($"Ending bitrate: {videoInfo.GetOutputBitrate()} kbps");
                         }
                     }
                     if (RemuxDolbyVision && !EncodeHevc && converted == ConverterStatusEnum.NotConverted)
@@ -182,8 +182,8 @@ public class LibraryOptimizer
                              
                             converted = ConverterBackend.Remux(videoInfo);
                             
-                            ConsoleLog.WriteLine($"Starting bitrate: {videoInfo.GetInputBitrate()} mbps");
-                            ConsoleLog.WriteLine($"Ending bitrate: {videoInfo.GetOutputBitrate()} mbps");
+                            ConsoleLog.WriteLine($"Starting bitrate: {videoInfo.GetInputBitrate()} kbps");
+                            ConsoleLog.WriteLine($"Ending bitrate: {videoInfo.GetOutputBitrate()} kbps");
                         }
                     }
                     if (RemuxDolbyVision && EncodeHevc && converted == ConverterStatusEnum.NotConverted)
@@ -194,8 +194,8 @@ public class LibraryOptimizer
                              
                             converted = ConverterBackend.RemuxAndEncodeHevc(videoInfo);
                             
-                            ConsoleLog.WriteLine($"Starting bitrate: {videoInfo.GetInputBitrate()} mbps");
-                            ConsoleLog.WriteLine($"Ending bitrate: {videoInfo.GetOutputBitrate()} mbps");
+                            ConsoleLog.WriteLine($"Starting bitrate: {videoInfo.GetInputBitrate()} kbps");
+                            ConsoleLog.WriteLine($"Ending bitrate: {videoInfo.GetOutputBitrate()} kbps");
                         }
                     }
                     if (EncodeHevc && converted == ConverterStatusEnum.NotConverted)
@@ -204,8 +204,8 @@ public class LibraryOptimizer
                         {
                             converted = ConverterBackend.EncodeHevc(videoInfo);
                          
-                            ConsoleLog.WriteLine($"Starting bitrate: {videoInfo.GetInputBitrate()} mbps");
-                            ConsoleLog.WriteLine($"Ending bitrate: {videoInfo.GetOutputBitrate()} mbps");
+                            ConsoleLog.WriteLine($"Starting bitrate: {videoInfo.GetInputBitrate()} kbps");
+                            ConsoleLog.WriteLine($"Ending bitrate: {videoInfo.GetOutputBitrate()} kbps");
                         }
                     }
 
