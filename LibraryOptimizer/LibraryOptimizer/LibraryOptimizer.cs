@@ -9,7 +9,7 @@ namespace LibraryOptimizer.LibraryOptimizer;
 public class LibraryOptimizer
 {
     private string _dataFolder = "/data";
-    private string _incompleteFolder = "/incomplete";
+    //private string _incompleteFolder = "/incomplete";
     private bool _retryFailed;
     private string _configDir;
     private bool _forceStart = false;
@@ -30,7 +30,7 @@ public class LibraryOptimizer
         if (OperatingSystem.IsWindows())
         {
             _configDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
-            _incompleteFolder = "E:\\";
+            //_incompleteFolder = "E:\\";
         }
         else if (OperatingSystem.IsLinux())
         {
@@ -89,13 +89,13 @@ public class LibraryOptimizer
             BuildConfigFile(libraryOptimzerYaml, configFile);
         }
         
-        _incompleteFolder = Path.Join(_incompleteFolder, "libraryOptimizerIncomplete");
+        //_incompleteFolder = Path.Join(_incompleteFolder, "libraryOptimizerIncomplete");
         
         //Clean up old files
-        if(Directory.Exists(_incompleteFolder))
-            Directory.Delete(_incompleteFolder, true);
+        //if(Directory.Exists(_incompleteFolder))
+        //    Directory.Delete(_incompleteFolder, true);
         
-        Directory.CreateDirectory(_incompleteFolder);
+        //Directory.CreateDirectory(_incompleteFolder);
     }
 
     private void BuildConfigFile(LibraryOptimizerYaml libraryOptimizerYaml, string configFile)
