@@ -239,9 +239,6 @@ public class VideoInfo
             }
             else
             {
-                //Renames new mkv container to the original file and deletes original file.
-                //File.Move(_outputFile, _inputFilePath, true);
-
                 ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
 
                 _converterStatusEnum = ConverterStatusEnum.Success;
@@ -250,9 +247,6 @@ public class VideoInfo
 
             ConsoleLog.WriteLine($"Remuxing Non Encoded to MKV: {_remuxCommand}");
             ConverterBackend.RunCommand(_remuxCommand, _inputFilePath);
-
-            //Renames new mkv container to the original file and deletes original file.
-            //File.Move(_outputFile, _inputFilePath, true);
 
             ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
             
@@ -280,9 +274,6 @@ public class VideoInfo
             
             ConsoleLog.WriteLine($"Remuxing to MKV: {_remuxCommand}");
             ConverterBackend.RunCommand(_remuxCommand, _inputFilePath);
-
-            //Renames new mkv container to the original file and deletes original file.
-            //File.Move(_outputFile, _inputFilePath, true);
 
             ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
             
@@ -411,8 +402,7 @@ public class VideoInfo
     {
         var plexIgnoreFile = Path.Combine(_tempDirectory, ".plexignore");
 
-        if(Directory.Exists(_tempDirectory))
-            Directory.Delete(_tempDirectory,true);
+        SafeDeleteDirectory(_tempDirectory);
         
         Directory.CreateDirectory(_tempDirectory);
         File.Create(plexIgnoreFile);
@@ -464,7 +454,30 @@ public class VideoInfo
             ConsoleLog.WriteLine("Appending metadata failed. Continuing...");
         }
         
-        if(Directory.Exists(_tempDirectory))
-            Directory.Delete(_tempDirectory,true);
+        SafeDeleteDirectory(_tempDirectory);
+    }
+    
+    private void SafeDeleteDirectory(string path, int retries = 5, int delay = 500)
+    {
+        for (int i = 0; i < retries; i++)
+        {
+            try
+            {
+                if (Directory.Exists(path))
+                {
+                    Directory.Delete(path, true);
+                }
+                return;
+            }
+            catch (IOException)
+            {
+                Thread.Sleep(delay);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                Thread.Sleep(delay);
+            }
+        }
+        throw new IOException($"Failed to delete directory {path} after multiple attempts.");
     }
 }
