@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using LibraryOptimizer.Enums;
 
 namespace LibraryOptimizer;
@@ -35,9 +36,7 @@ public abstract class ConverterBackend
     {
         //Generates an enumerable of a directory and iterates through it to append each item to allFiles and logs the addition.
         var directory = new DirectoryInfo(library);
-        //Old directory.GetFiles("*.mkv", SearchOption.AllDirectories);
-        var unSortedFiles = directory.GetFiles("*.*", SearchOption.AllDirectories)
-            .Where(f => f.FullName.EndsWith(".mkv", StringComparison.OrdinalIgnoreCase));
+        var unSortedFiles = directory.GetFiles("*.mkv", SearchOption.AllDirectories);
         
         allFiles.AddRange(unSortedFiles);
     }
@@ -46,26 +45,15 @@ public abstract class ConverterBackend
 
     #region File Operation Checks
 
-    public static bool ShouldBeProcessed(string filePath, bool retryFailed)
+    public static bool ShouldBeProcessed(VideoInfo videoInfo, bool retryFailed)
     {
-        var grabMetadataCommand = $"ffprobe -i '{filePath}' -show_entries format_tags=LIBRARY_OPTIMIZER_APP -of default=noprint_wrappers=1";
+        var regex = new Regex("(LIBRARY_OPTIMIZER_APP:)(.*)");
+        var match = regex.Match(videoInfo._inputFfmpegVideoInfo).Value;
         
-        var metadataOrFail = string.Empty;
-        try
-        {
-            metadataOrFail = RunCommand(grabMetadataCommand, filePath, false);
-        }
-        catch(Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-            
+        if (match.Contains("Converted=True.")
+            || (match.Contains("Converted=False.") && !retryFailed))
             return false;
-        } 
-
-        if (metadataOrFail.Contains("Converted=True.")
-            || (metadataOrFail.Contains("Converted=False.") && !retryFailed))
-            return false;
-        if (metadataOrFail.Contains("Converted=False.") && retryFailed)
+        if (match.Contains("Converted=False.") && retryFailed)
             return true;
         
         return true;
@@ -76,7 +64,7 @@ public abstract class ConverterBackend
         return fileInfo.Contains("DOVI configuration record: version: 1.0, profile: 7");
     }
     
-    public static bool CanEncodeAv1(string filePath, string fileInfo, double bitRate)
+    public static bool CanEncodeAv1(string fileInfo)
     {
         try
         {
@@ -243,39 +231,39 @@ public abstract class ConverterBackend
     #region File Operations
 
     //Remuxes and will Encode file if above 75Mbps
-    public static ConverterStatusEnum RemuxAndEncodeHevc(string filePath, LibraryOptimizer.LibraryOptimizer optimizerSettings)
+    public static ConverterStatusEnum RemuxAndEncodeHevc(VideoInfo videoInfo)
     {
-        var fileConverter = new FileConverter(filePath, optimizerSettings);
-        var converted = fileConverter.RemuxAndEncodeHevc();
-        fileConverter.AppendMetadata();
+        videoInfo.SetVideoInfoCommands();
+        var converted = videoInfo.RemuxAndEncodeHevc();
+        videoInfo.AppendMetadata();
 
         return converted;
     }
     
     //Only remux file from Dolby Vision Profile 7 to Profile 8
-    public static ConverterStatusEnum Remux(string filePath, LibraryOptimizer.LibraryOptimizer optimizerSettings)
+    public static ConverterStatusEnum Remux(VideoInfo videoInfo)
     {
-        var fileConverter = new FileConverter(filePath, optimizerSettings);
-        var converted = fileConverter.Remux();
-        fileConverter.AppendMetadata();
+        videoInfo.SetVideoInfoCommands();
+        var converted = videoInfo.Remux();
+        videoInfo.AppendMetadata();
 
         return converted;
     }
     
-    public static ConverterStatusEnum EncodeHevc(string filePath, LibraryOptimizer.LibraryOptimizer optimizerSettings)
+    public static ConverterStatusEnum EncodeHevc(VideoInfo videoInfo)
     {
-        var fileConverter = new FileConverter(filePath, optimizerSettings);
-        var converted = fileConverter.EncodeHevc();
-        fileConverter.AppendMetadata();
+        videoInfo.SetVideoInfoCommands();
+        var converted = videoInfo.EncodeHevc();
+        videoInfo.AppendMetadata();
 
         return converted;
     }
     
-    public static ConverterStatusEnum EncodeAv1(string filePath, double bitRate, LibraryOptimizer.LibraryOptimizer optimizerSettings)
+    public static ConverterStatusEnum EncodeAv1(VideoInfo videoInfo)
     {
-        var fileConverter = new FileConverter(filePath, bitRate, optimizerSettings);
-        var converted = fileConverter.EncodeAv1();
-        fileConverter.AppendMetadata();
+        videoInfo.SetVideoInfoCommandsWithAv1();
+        var converted = videoInfo.EncodeAv1();
+        videoInfo.AppendMetadata();
         
         return converted;
     }

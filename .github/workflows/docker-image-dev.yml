@@ -20,7 +20,7 @@ jobs:
         password: ${{ secrets.DOCKERPASS }}
           
     - name: Build the Docker image
-      run: docker build --file LibraryOptimizer/Dockerfile --tag slummybell/media-library-optimizer:latest LibraryOptimizer/
+      run: docker build --file LibraryOptimizer/Dockerfile --tag slummybell/media-library-optimizer:dev LibraryOptimizer/
     - name: Push the Docker image
       run: docker push slummybell/media-library-optimizer:dev
 
