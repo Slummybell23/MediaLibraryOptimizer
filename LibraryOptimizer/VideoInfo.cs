@@ -459,22 +459,32 @@ public class VideoInfo
     
     private void SafeDeleteDirectory(string path, int retries = 5, int delay = 2000)
     {
+        var ex = new Exception();
         for (int i = 0; i < retries; i++)
         {
             try
             {
                 if (Directory.Exists(path))
                 {
+                    var files = Directory.GetFiles(path);
+                    foreach (var file in files)
+                    {
+                        ConsoleLog.WriteLine($"Deleting {file}");
+                        File.Delete(file);
+                    }
+                    
+                    ConsoleLog.WriteLine($"Deleting {path}");
                     Directory.Delete(path, true);
                 }
                 return;
             }
-            catch
+            catch(Exception thrownEx)
             {
+                ex = thrownEx;
                 Thread.Sleep(delay);
             }
         }
         
-        throw new IOException($"Failed to delete directory {path} after multiple attempts.");
+        throw ex;
     }
 }
