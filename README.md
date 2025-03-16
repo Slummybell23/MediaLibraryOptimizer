@@ -2,10 +2,10 @@
 
 <img src="Original Logo.png" alt="Media Library Optimizer Logo">
 
-## An application to shrink the size of your media servers storage space without perceivable quality loss or artefacting!
+## An application to shrink the size of your media servers storage space with excellent quality!
 
 The Optimizer will shrink your servers storage while retaining very high quality.
-* *Tested on 65 inch Hisense U8N, no noticable compression artefacts.*
+* *Tested on 65 inch Hisense U8N, mininimal to no compression artefacting.*
 * *Tested with large HEVC files 50+GB often compressing down to half size with a good amount compressing even more!*
 
 ### Main Functions
@@ -36,6 +36,7 @@ libraryPaths:
 - {Insert Your Library Path Here}
 checkAll: y
 startHour: 13
+quality: Balanced
 retryFailed: false
 ```
 
@@ -45,6 +46,11 @@ libraryPaths:
 - /movies
 - /tvShows
 ```
+`quality` setting will determine video quality/compression ratio. Possible options are:
+* Balanced: Default setting, recomended to most users.
+* HighQuality: Set if your noticing light compression artefacting.
+* NearLossless: Set if you want your outputs to be near lossless compared to the input. **Note**: hardware encoding does not support full lossless so, near lossless is the next best thing.
+
 `retryFailed` if set to true will allow the program to process files previously marked as failed.
 
 ### Requirements
