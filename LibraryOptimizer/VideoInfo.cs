@@ -470,7 +470,7 @@ public class VideoInfo
                     foreach (var file in files)
                     {
                         ConsoleLog.WriteLine($"Deleting {file}");
-                        File.Delete(file);
+                        ConverterBackend.DeleteFile(file);
                     }
                     
                     ConsoleLog.WriteLine($"Deleting {path}");
