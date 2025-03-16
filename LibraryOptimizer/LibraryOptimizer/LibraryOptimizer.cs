@@ -9,7 +9,6 @@ namespace LibraryOptimizer.LibraryOptimizer;
 public class LibraryOptimizer
 {
     private string _dataFolder = "/data";
-    //private string _incompleteFolder = "/incomplete";
     private bool _retryFailed;
     private string _configDir;
     private bool _forceStart = false;
@@ -30,7 +29,6 @@ public class LibraryOptimizer
         if (OperatingSystem.IsWindows())
         {
             _configDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
-            //_incompleteFolder = "E:\\";
         }
         else if (OperatingSystem.IsLinux())
         {
@@ -88,14 +86,6 @@ public class LibraryOptimizer
             var libraryOptimzerYaml = new LibraryOptimizerYaml();
             BuildConfigFile(libraryOptimzerYaml, configFile);
         }
-        
-        //_incompleteFolder = Path.Join(_incompleteFolder, "libraryOptimizerIncomplete");
-        
-        //Clean up old files
-        //if(Directory.Exists(_incompleteFolder))
-        //    Directory.Delete(_incompleteFolder, true);
-        
-        //Directory.CreateDirectory(_incompleteFolder);
     }
 
     private void BuildConfigFile(LibraryOptimizerYaml libraryOptimizerYaml, string configFile)
@@ -120,7 +110,6 @@ public class LibraryOptimizer
             var now = DateTime.Now;
 
             //Calculates hours until start hour user specified.
-            //TODO: Upgrade Scheduler
             var hoursDifference = (StartHour + 24) - now.Hour;
             if (hoursDifference >= 24)
                 hoursDifference -= 24;
@@ -211,8 +200,6 @@ public class LibraryOptimizer
 
                     if (converted != ConverterStatusEnum.NotConverted)
                     {                            
-                        //ConsoleLog.WriteLine("Processing done. Moving output file to library... /n DO NOT TURN OFF PROGRAM DURING THIS");
-
                         if (converted == ConverterStatusEnum.Success)
                         {
                             convertedFiles.Add(inputFile);

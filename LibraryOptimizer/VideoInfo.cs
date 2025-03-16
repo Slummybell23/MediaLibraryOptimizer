@@ -33,7 +33,7 @@ public class VideoInfo
     }
     
     public string _inputFfmpegVideoInfo;
-    public string _outputFfmpegVideoInfo;
+    private string _outputFfmpegVideoInfo;
 
     private ConverterStatusEnum _converterStatusEnum = ConverterStatusEnum.NotConverted;
     
@@ -65,7 +65,6 @@ public class VideoInfo
     private string _remuxCommandEncoded;
     private string _remuxCommand;
 
-    //private bool _converted;
     private string _failedReason = string.Empty;
     private string _commandVideoName;
 
@@ -328,13 +327,8 @@ public class VideoInfo
                 _converterStatusEnum = ConverterStatusEnum.Failed;
                 return ConverterStatusEnum.Failed;
             }
-            else
-            {
-                //Renames new mkv container to the original file and deletes original file.
-                //File.Move(_outputFile, _inputFilePath, true);
-
-                ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
-            }
+            
+            ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
 
             _converterStatusEnum = ConverterStatusEnum.Success;
             return ConverterStatusEnum.Success;
@@ -367,13 +361,7 @@ public class VideoInfo
                 _converterStatusEnum = ConverterStatusEnum.Failed;
                 return ConverterStatusEnum.Failed;
             }
-            else
-            {
-                //Renames new mkv container to the original file and deletes original file.
-                //File.Move(_outputFile, _inputFilePath, true);
-
-                ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
-            }
+            ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
 
             _converterStatusEnum = ConverterStatusEnum.Success;
             return ConverterStatusEnum.Success;
@@ -401,12 +389,11 @@ public class VideoInfo
     private void CreateTempFolder()
     {
         var plexIgnoreFile = Path.Combine(_tempDirectory, ".plexignore");
-
+        
         SafeDeleteDirectory(_tempDirectory);
         
         Directory.CreateDirectory(_tempDirectory);
-        //File.Create(plexIgnoreFile);
-        File.WriteAllText(plexIgnoreFile,"*");
+        File.WriteAllText(plexIgnoreFile,"*"); 
     }
     
     private double ScanBitrate(string ffmpegFileInfo)
