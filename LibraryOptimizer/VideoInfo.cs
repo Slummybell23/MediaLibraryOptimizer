@@ -405,7 +405,8 @@ public class VideoInfo
         SafeDeleteDirectory(_tempDirectory);
         
         Directory.CreateDirectory(_tempDirectory);
-        File.Create(plexIgnoreFile);
+        //File.Create(plexIgnoreFile);
+        File.WriteAllText(plexIgnoreFile,"*");
     }
     
     private double ScanBitrate(string ffmpegFileInfo)
@@ -457,7 +458,7 @@ public class VideoInfo
         SafeDeleteDirectory(_tempDirectory);
     }
     
-    private void SafeDeleteDirectory(string path, int retries = 5, int delay = 5000)
+    private void SafeDeleteDirectory(string path, int retries = 5, int delay = 10000)
     {
         var ex = new Exception();
         for (int i = 0; i < retries; i++)
@@ -470,6 +471,7 @@ public class VideoInfo
                     foreach (var file in files)
                     {
                         ConsoleLog.WriteLine($"Deleting {file}");
+                        Thread.Sleep(2000);
                         ConverterBackend.DeleteFile(file);
                     }
                     
