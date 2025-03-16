@@ -466,8 +466,8 @@ public class VideoInfo
                         ConverterBackend.DeleteFile(file);
                     }
                     
-                    ConsoleLog.WriteLine($"Deleting {path}");
                     Directory.Delete(path, true);
+                    ConsoleLog.WriteLine($"Deleted: {path}");
                 }
                 return;
             }
