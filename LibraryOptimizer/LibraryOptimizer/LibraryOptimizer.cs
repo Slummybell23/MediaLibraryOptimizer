@@ -146,6 +146,20 @@ public class LibraryOptimizer
 
                     //Start timer to calculate time to convert file
                     var start = DateTime.Now;
+
+                    try
+                    {
+                        File.Open(inputFile, FileMode.Open);
+                    }
+                    catch (UnauthorizedAccessException e)
+                    {
+                        ConsoleLog.WriteLine(e.ToString());
+                    }
+                    catch (IOException e)
+                    {
+                        ConsoleLog.WriteLine("Io Exception, file in use likely... skipping");
+                        continue;
+                    }
                     
                     if (EncodeAv1 || EncodeHevc)
                     {
