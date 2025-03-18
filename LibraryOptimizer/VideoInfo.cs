@@ -55,6 +55,8 @@ public class VideoInfo
     private string _hevcFile;
 
     private string _extractCommand;
+    private string _extractProfile8HevcCommand;
+
     private string _convertCommand;
 
     private string _reEncodeHevcProfile8Command;
@@ -95,11 +97,14 @@ public class VideoInfo
         //Copies the HEVC stream of the mkv container to a seperate hevc file.
         _extractCommand = $"ffmpeg -i '{_commandInputFilePath}' -map 0:v:0 -c copy '{_hevcFile}'";
 
+        //Copies the HEVC stream of the profile 8 mkv container to seperate hevc file.
+        _extractProfile8HevcCommand = $"ffmpeg -i '{_commandInputFilePath}' -map 0:v:0 -c copy '{_profile8HevcFile}'";
+        
         //Converts the hevc file from Dolby Vision Profile 7 to Dolby Vision Profile 8.
         _convertCommand = $"dovi_tool -m 2 convert -i '{_hevcFile}' -o '{_profile8HevcFile}'";
 
         //Extracting rpu file which contains the Dolby Vision metadata. Otherwise, FFmpeg loses Dolby Vision metadata.
-        _extractProfile8RpuCommand = $"dovi_tool extract-rpu -i '{_hevcFile}' -o '{_rpuFile}'";
+        _extractProfile8RpuCommand = $"dovi_tool extract-rpu -i '{_profile8HevcFile}' -o '{_rpuFile}'";
         
         //After encoding, inject the rpu file back into the HEVC so Dolby Vision metadata is retained.
         _injectRpu = $"dovi_tool inject-rpu -i '{_encodedHevc}' -r '{_rpuFile}' -o '{_encodedProfile8HevcFile}'";
@@ -111,10 +116,10 @@ public class VideoInfo
         
         if(_optimizerSettings.IsNvidia)
             //NVIDIA NVENC
-            _reEncodeHevcProfile8Command = $"ffmpeg -i '{_hevcFile}' -c:v hevc_nvenc -preset p7 -cq 3 -c:a copy '{_encodedHevc}'";
+            _reEncodeHevcProfile8Command = $"ffmpeg -i '{_profile8HevcFile}' -c:v hevc_nvenc -preset p7 -cq 3 -c:a copy '{_encodedHevc}'";
         else
             //INTEL ARC
-            _reEncodeHevcProfile8Command = $"ffmpeg -hwaccel qsv -i '{_hevcFile}' -c:v hevc_qsv -preset 1 -global_quality 3 -c:a copy '{_encodedHevc}'";
+            _reEncodeHevcProfile8Command = $"ffmpeg -hwaccel qsv -i '{_profile8HevcFile}' -c:v hevc_qsv -preset 1 -global_quality 3 -c:a copy '{_encodedHevc}'";
         
         //Generate Temp Folder
         CreateTempFolder();
@@ -212,6 +217,8 @@ public class VideoInfo
             ConsoleLog.WriteLine($"Converting to Profile 8: {_convertCommand}");
             ConverterBackend.RunCommand(_convertCommand, _inputFilePath);
 
+            ConverterBackend.DeleteFile(_hevcFile);
+            
             ConsoleLog.WriteLine($"Extracting RPU: {_extractProfile8RpuCommand}");
             ConverterBackend.RunCommand(_extractProfile8RpuCommand, _inputFilePath);
 
@@ -275,6 +282,8 @@ public class VideoInfo
             ConsoleLog.WriteLine($"Converting to Profile 8: {_convertCommand}");
             ConverterBackend.RunCommand(_convertCommand, _inputFilePath);
             
+            ConverterBackend.DeleteFile(_hevcFile);
+            
             ConsoleLog.WriteLine($"Remuxing to MKV: {_remuxCommand}");
             ConverterBackend.RunCommand(_remuxCommand, _inputFilePath);
 
@@ -296,8 +305,8 @@ public class VideoInfo
     {
         try
         {
-            ConsoleLog.WriteLine($"Extracting HEVC stream: {_extractCommand}");
-            ConverterBackend.RunCommand(_extractCommand, _inputFilePath);
+            ConsoleLog.WriteLine($"Extracting HEVC stream: {_extractProfile8HevcCommand}");
+            ConverterBackend.RunCommand(_extractProfile8HevcCommand, _inputFilePath);
             
             ConsoleLog.WriteLine($"Extracting RPU: {_extractProfile8RpuCommand}");
             ConverterBackend.RunCommand(_extractProfile8RpuCommand, _inputFilePath);
@@ -313,6 +322,8 @@ public class VideoInfo
                 ConsoleLog.WriteLine(failedOutput);
                 throw;
             }
+            
+            ConverterBackend.DeleteFile(_profile8HevcFile);
             
             ConsoleLog.WriteLine($"Injecting RPU: {_injectRpu}");
             ConverterBackend.RunCommand(_injectRpu, _inputFilePath);
