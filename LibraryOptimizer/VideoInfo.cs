@@ -458,7 +458,7 @@ public class VideoInfo
         SafeDeleteDirectory(_tempDirectory);
     }
     
-    private void SafeDeleteDirectory(string path, int retries = 5, int delay = 10000)
+    private void SafeDeleteDirectory(string path, int retries = 10, int delay = 10000)
     {
         var ex = new Exception();
         for (int i = 0; i < retries; i++)
