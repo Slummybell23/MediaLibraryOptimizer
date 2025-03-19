@@ -119,7 +119,7 @@ public class VideoInfo
             _reEncodeHevcProfile8Command = $"ffmpeg -i '{_profile8HevcFile}' -c:v hevc_nvenc -preset p7 -cq 3 -c:a copy '{_encodedHevc}'";
         else
             //INTEL ARC
-            _reEncodeHevcProfile8Command = $"ffmpeg -hwaccel qsv -i '{_profile8HevcFile}' -c:v hevc_qsv -preset 1 -global_quality 3 -c:a copy '{_encodedHevc}'";
+            _reEncodeHevcProfile8Command = $"ffmpeg -hwaccel qsv -i '{_profile8HevcFile}' -c:v hevc_qsv -preset 1 -global_quality 5 -c:a copy '{_encodedHevc}'";
         
         //Generate Temp Folder
         CreateTempFolder();
