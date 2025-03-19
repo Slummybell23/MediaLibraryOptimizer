@@ -216,8 +216,6 @@ public class VideoInfo
 
             ConsoleLog.WriteLine($"Converting to Profile 8: {_convertCommand}");
             ConverterBackend.RunCommand(_convertCommand, _inputFilePath);
-
-            ConverterBackend.DeleteFile(_hevcFile);
             
             ConsoleLog.WriteLine($"Extracting RPU: {_extractProfile8RpuCommand}");
             ConverterBackend.RunCommand(_extractProfile8RpuCommand, _inputFilePath);
