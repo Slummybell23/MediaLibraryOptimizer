@@ -118,7 +118,7 @@ public class VideoInfo
             //NVIDIA NVENC
             _reEncodeHevcProfile8Command = $"ffmpeg -i '{_profile8HevcFile}' -c:v hevc_nvenc -preset p7 -cq 3 -c:a copy '{_encodedHevc}'";
         else
-            //INTEL ARC
+            //INTEL ARC Hopefully encodes well now
             _reEncodeHevcProfile8Command = $"ffmpeg -hwaccel qsv -i '{_profile8HevcFile}' -c:v hevc_qsv -preset 1 -global_quality 5 -c:a copy '{_encodedHevc}'";
         
         //Generate Temp Folder
