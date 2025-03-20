@@ -48,7 +48,7 @@ public abstract class ConverterBackend
     public static bool ShouldBeProcessed(VideoInfo videoInfo, bool retryFailed)
     {
         var regex = new Regex("(LIBRARY_OPTIMIZER_APP:)(.*)");
-        var match = regex.Match(videoInfo._inputFfmpegVideoInfo).Value;
+        var match = regex.Match(videoInfo.InputFfmpegVideoInfo).Value;
         
         if (match.Contains("Converted=True.")
             || (match.Contains("Converted=False.") && !retryFailed))

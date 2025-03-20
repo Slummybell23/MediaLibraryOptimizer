@@ -17,7 +17,7 @@ public class VideoInfo
 
     public void SetInputBitrate()
     { 
-        _inputBitRate = ScanBitrate(_inputFfmpegVideoInfo);
+        _inputBitRate = ScanBitrate(InputFfmpegVideoInfo);
     }
 
     private double _outputBitRate;
@@ -32,7 +32,7 @@ public class VideoInfo
         _outputBitRate = ScanBitrate(_outputFfmpegVideoInfo);
     }
     
-    public string _inputFfmpegVideoInfo;
+    public string InputFfmpegVideoInfo;
     private string _outputFfmpegVideoInfo;
 
     private ConverterStatusEnum _converterStatusEnum = ConverterStatusEnum.NotConverted;
@@ -86,7 +86,7 @@ public class VideoInfo
         _outputFile = ConverterBackend.FileRemoveFormat(_commandOutputFile);
         
         var command = $"ffmpeg -i '{_commandInputFilePath}' -hide_banner -loglevel info";
-        _inputFfmpegVideoInfo = ConverterBackend.RunCommand(command, _commandInputFilePath, false);
+        InputFfmpegVideoInfo = ConverterBackend.RunCommand(command, _commandInputFilePath, false);
     }
     
     public void SetVideoInfoCommands()
@@ -119,7 +119,7 @@ public class VideoInfo
             _reEncodeHevcProfile8Command = $"ffmpeg -i '{_profile8HevcFile}' -c:v hevc_nvenc -preset p7 -cq 3 -c:a copy '{_encodedHevc}'";
         else
             //INTEL ARC Hopefully encodes well now
-            _reEncodeHevcProfile8Command = $"ffmpeg -hwaccel qsv -i '{_profile8HevcFile}' -c:v hevc_qsv -preset 1 -global_quality 11 -c:a copy '{_encodedHevc}'";
+            _reEncodeHevcProfile8Command = $"ffmpeg -hwaccel qsv -i '{_profile8HevcFile}' -c:v hevc_qsv -preset 1 -global_quality 13 -c:a copy '{_encodedHevc}'";
         
         //Generate Temp Folder
         CreateTempFolder();
@@ -132,13 +132,6 @@ public class VideoInfo
         _commandVideoName = Path.GetFileNameWithoutExtension(_commandInputFilePath);
         
         var directory = _commandTempDirectory;
-        _hevcFile = Path.Combine(directory, $"{_commandVideoName}hevc.hevc");
-        
-        _profile8HevcFile = Path.Combine(directory, $"{_commandVideoName}profile8hevc.hevc");
-        _rpuFile = Path.Combine(directory, $"{_commandVideoName}rpu.bin");
-        _encodedHevc = Path.Combine(directory, $"{_commandVideoName}encodedHevc.hevc");
-        _encodedProfile8HevcFile = Path.Combine(directory, $"{_commandVideoName}profile8encodedhevc.hevc");
-        
         _hevcFile = Path.Combine(directory, $"{_commandVideoName}hevc.hevc");
         
         _profile8HevcFile = Path.Combine(directory, $"{_commandVideoName}profile8hevc.hevc");

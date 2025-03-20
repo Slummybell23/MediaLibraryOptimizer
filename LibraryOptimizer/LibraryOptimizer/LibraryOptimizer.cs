@@ -131,7 +131,7 @@ public class LibraryOptimizer
                     var inputFile = fileInfoEntry.FullName;
                     var commandFile = ConverterBackend.FileFormatToCommand(inputFile);
                     var videoInfo = new VideoInfo(inputFile, this);
-                    var fileInfo = videoInfo._inputFfmpegVideoInfo;
+                    var fileInfo = videoInfo.InputFfmpegVideoInfo;
 
                     ConsoleLog.ResetLogText();
                     ConsoleLog.WriteLine($"Processing file: {inputFile}");
