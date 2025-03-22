@@ -149,6 +149,8 @@ public abstract class ConverterBackend
             string line;
             while ((line = process.StandardOutput.ReadLine()!) != null)
             {
+                Program._cancellationToken.Token.ThrowIfCancellationRequested();
+                
                 //Ignores specific outputs
                 //Allowed outputs get logged to a logFile in the ConsoleLog object.
                 if (!line.Contains("Last message repeated") 
@@ -168,6 +170,8 @@ public abstract class ConverterBackend
             string line;
             while ((line = process.StandardError.ReadLine()!) != null)
             {
+                Program._cancellationToken.Token.ThrowIfCancellationRequested();
+
                 //Ignores specific outputs
                 //Allowed outputs get logged to a logFile in the ConsoleLog object.
                 if (!line.Contains("Last message repeated") 
