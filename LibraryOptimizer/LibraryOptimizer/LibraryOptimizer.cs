@@ -137,7 +137,7 @@ public class LibraryOptimizer
                     var inputFile = fileInfoEntry.FullName;
                     var commandFile = ConverterBackend.FileFormatToCommand(inputFile);
                     var videoInfo = new VideoInfo(inputFile, this);
-                    var fileInfo = videoInfo._inputFfmpegVideoInfo;
+                    var fileInfo = videoInfo.InputFfmpegVideoInfo;
 
                     ConsoleLog.ResetLogText();
                     ConsoleLog.WriteLine($"Processing file: {inputFile}");
@@ -152,6 +152,20 @@ public class LibraryOptimizer
 
                     //Start timer to calculate time to convert file
                     var start = DateTime.Now;
+
+                    try
+                    {
+                        File.Open(inputFile, FileMode.Open);
+                    }
+                    catch (UnauthorizedAccessException e)
+                    {
+                        ConsoleLog.WriteLine(e.ToString());
+                    }
+                    catch (IOException e)
+                    {
+                        ConsoleLog.WriteLine("Io Exception, file in use likely... skipping");
+                        continue;
+                    }
                     
                     if (EncodeAv1 || EncodeHevc)
                     {
