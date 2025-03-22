@@ -22,10 +22,14 @@ public class LibraryOptimizer
     public QualityEnum Quality;
     public bool IsNvidia;
 
+    public CancellationToken Token;
+
     #region Constructors
 
-    public LibraryOptimizer()
+    public LibraryOptimizer(CancellationTokenSource tokenSource)
     {
+        Token = tokenSource.Token;
+        
         if (OperatingSystem.IsWindows())
         {
             _configDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
@@ -128,6 +132,8 @@ public class LibraryOptimizer
                 ConsoleLog.WriteLine($"Processing files...");
                 foreach (var fileInfoEntry in directory)
                 {
+                    Token.ThrowIfCancellationRequested();
+                    
                     var inputFile = fileInfoEntry.FullName;
                     var commandFile = ConverterBackend.FileFormatToCommand(inputFile);
                     var videoInfo = new VideoInfo(inputFile, this);

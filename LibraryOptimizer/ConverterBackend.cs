@@ -210,6 +210,8 @@ public abstract class ConverterBackend
 
     public static string RunCommand(string command, string file, bool printOutput = true)
     {
+        Program._cancellationToken.Token.ThrowIfCancellationRequested();
+        
         //Program is built to run in both windows and linux
         //(Although preferably in a linux based docker container)
         if (OperatingSystem.IsWindows())

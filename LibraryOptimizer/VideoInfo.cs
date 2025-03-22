@@ -254,6 +254,9 @@ public class VideoInfo
         }
         catch (Exception ex)
         {
+            if (ex is OperationCanceledException)
+                throw;
+            
             ConsoleLog.WriteLine($"Error during conversion: {ex.Message}");
             
             _converterStatusEnum = ConverterStatusEnum.Failed;
@@ -281,6 +284,9 @@ public class VideoInfo
         }
         catch (Exception ex)
         {
+            if (ex is OperationCanceledException)
+                throw;
+            
             ConsoleLog.WriteLine($"Error during conversion: {ex.Message}");
             
             _converterStatusEnum = ConverterStatusEnum.Failed;
@@ -335,6 +341,9 @@ public class VideoInfo
         }
         catch (Exception ex)
         {
+            if (ex is OperationCanceledException)
+                throw;
+            
             ConsoleLog.WriteLine($"Error during conversion: {ex.Message}");
 
             _converterStatusEnum = ConverterStatusEnum.Failed;
@@ -368,6 +377,9 @@ public class VideoInfo
         }
         catch (Exception ex)
         {
+            if (ex is OperationCanceledException)
+                throw;
+            
             ConsoleLog.WriteLine($"Error during conversion: {ex.Message}");
 
             _converterStatusEnum = ConverterStatusEnum.Failed;
@@ -436,8 +448,11 @@ public class VideoInfo
             ConsoleLog.WriteLine("DO NOT TURN OFF PROGRAM");
             File.Move(ConverterBackend.FileRemoveFormat(customMetadataFile), _inputFilePath, true);
         }
-        catch
+        catch(Exception ex)
         {
+            if (ex is OperationCanceledException)
+                throw;
+            
             ConsoleLog.WriteLine($"Metadata fail: {failOutput}");
             ConsoleLog.WriteLine("Appending metadata failed. Continuing...");
         }
