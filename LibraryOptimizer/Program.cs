@@ -21,6 +21,13 @@ public abstract class Program
             wrapper.StartHour = DateTime.Now.Hour;
         }
        
+        Console.CancelKeyPress += (sender, eventArgs) =>
+        {
+            Console.WriteLine("SIGTERM received. Shutting down...");
+            eventArgs.Cancel = true; // Prevent immediate termination
+            _cancellationToken.Cancel();
+        };
+        
         AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) =>
         {
             Console.WriteLine("Process exit detected. Running cleanup...");
@@ -29,6 +36,14 @@ public abstract class Program
 
         try
         {
+
+            // while (true)
+            // {
+            //     _cancellationToken.Token.ThrowIfCancellationRequested();
+            //     Thread.Sleep(2000);
+            //     Console.WriteLine("Running...");
+            // }
+            //
             wrapper.ProcessLibrary();
 
         }
