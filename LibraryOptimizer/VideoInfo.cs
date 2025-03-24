@@ -202,6 +202,8 @@ public class VideoInfo
 
     public ConverterStatusEnum RemuxAndEncodeHevc()
     {
+        ConsoleLog.WriteLine("Remuxing and Encoding...");
+        
         try
         {
             ConsoleLog.WriteLine($"Extracting HEVC stream: {_extractCommand}");
