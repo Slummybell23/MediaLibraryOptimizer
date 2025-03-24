@@ -27,7 +27,7 @@ public abstract class Program
 
         AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) =>
         {
-            Console.WriteLine("Process exit detected.");
+            Console.WriteLine("Stopping Optimizer...");
             _cancellationToken.Cancel();
 
             if (_mainWorkTask != null)
@@ -39,11 +39,9 @@ public abstract class Program
                 }
                 catch (OperationCanceledException)
                 {
-                    Console.WriteLine("Operation Canceled...");
+                    Console.WriteLine("Optimizer Closed.");
                 }
             }
-
-            Cleanup();
         };
         
         _mainWorkTask.Wait();
@@ -57,11 +55,4 @@ public abstract class Program
             wrapper.ProcessLibrary();
         }
     }
-    
-    private static void Cleanup()
-    {
-        Console.WriteLine("Cleaning...");
-       
-    }
-   
 }
