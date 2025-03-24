@@ -36,20 +36,32 @@ public abstract class Program
 
         try
         {
-
-            while (true)
+            Task mainTask = Task.Run(() =>
             {
-                _cancellationToken.Token.ThrowIfCancellationRequested();
-                Thread.Sleep(2000);
-                Console.WriteLine("Running...");
-            }
-            
-            wrapper.ProcessLibrary();
+                // Simulate long-running work
+                while (true)
+                {
+                    _cancellationToken.Token.ThrowIfCancellationRequested();
+                    Console.WriteLine("Running...");
+                    Thread.Sleep(2000);
+                }
 
+                // If you want to run the actual work:
+                // wrapper.ProcessLibrary();
+            }, _cancellationToken.Token);
+
+            mainTask.Wait(); // Block until it completes or is cancelled
         }
-        catch (OperationCanceledException ex)
+        catch (AggregateException ex)
         {
-            Cleanup();
+            if (ex.InnerException is OperationCanceledException)
+            {
+                Cleanup();
+            }
+            else
+            {
+                throw;
+            }
         }
     }
 
