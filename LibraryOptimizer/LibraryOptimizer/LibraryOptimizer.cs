@@ -144,11 +144,11 @@ public class LibraryOptimizer
                         ConsoleLog.ResetLogText();
                         ConsoleLog.WriteLine($"Processing file: {inputFile}");
 
-                        // if (!ConverterBackend.ShouldBeProcessed(videoInfo, _retryFailed))
-                        // {
-                        //     ConsoleLog.WriteLine("Skipping file due to metadata check.");
-                        //     continue;
-                        // }
+                        if (!ConverterBackend.ShouldBeProcessed(videoInfo, _retryFailed))
+                        {
+                            ConsoleLog.WriteLine("Skipping file due to metadata check.");
+                            continue;
+                        }
 
                         var converted = ConverterStatusEnum.NotConverted;
 
