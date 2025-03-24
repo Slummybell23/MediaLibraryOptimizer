@@ -480,6 +480,9 @@ public class VideoInfo
                     var files = Directory.GetFiles(path);
                     foreach (var file in files)
                     {
+                        if (file.Contains("plexignore"))
+                            continue;
+                        
                         ConsoleLog.WriteLine($"Deleting {file}");
                         Thread.Sleep(2000);
                         ConverterBackend.DeleteFile(file);
