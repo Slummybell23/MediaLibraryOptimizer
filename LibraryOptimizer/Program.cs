@@ -6,7 +6,7 @@ namespace LibraryOptimizer;
 public abstract class Program
 { 
     public static CancellationTokenSource _cancellationToken = new CancellationTokenSource(); 
-    private static Task? _mainWorkTask;
+    private static Task? _optimizerTask;
     
     private static void Main(string[] args)
     {
@@ -23,19 +23,19 @@ public abstract class Program
             wrapper.StartHour = DateTime.Now.Hour;
         }
        
-        _mainWorkTask = Task.Run(() => RunApp(_cancellationToken.Token, wrapper));
+        _optimizerTask = Task.Run(wrapper.ProcessLibrary);
 
         AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) =>
         {
             Console.WriteLine("Stopping Optimizer...");
             _cancellationToken.Cancel();
 
-            if (_mainWorkTask != null)
+            if (_optimizerTask != null)
             {
                 Console.WriteLine("Waiting for main work to finish...");
                 try
                 {
-                    _mainWorkTask.GetAwaiter().GetResult();
+                    _optimizerTask.GetAwaiter().GetResult();
                 }
                 catch (OperationCanceledException)
                 {
@@ -44,15 +44,6 @@ public abstract class Program
             }
         };
         
-        _mainWorkTask.Wait();
-    }
-    
-    private static void RunApp(CancellationToken token, LibraryOptimizer.LibraryOptimizer wrapper)
-    {
-        while (true)
-        {
-            token.ThrowIfCancellationRequested();
-            wrapper.ProcessLibrary();
-        }
+        _optimizerTask.Wait();
     }
 }
