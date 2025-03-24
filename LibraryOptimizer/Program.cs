@@ -37,13 +37,13 @@ public abstract class Program
         try
         {
 
-            // while (true)
-            // {
-            //     _cancellationToken.Token.ThrowIfCancellationRequested();
-            //     Thread.Sleep(2000);
-            //     Console.WriteLine("Running...");
-            // }
-            //
+            while (true)
+            {
+                _cancellationToken.Token.ThrowIfCancellationRequested();
+                Thread.Sleep(2000);
+                Console.WriteLine("Running...");
+            }
+            
             wrapper.ProcessLibrary();
 
         }
