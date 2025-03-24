@@ -10,7 +10,7 @@ public abstract class Program
     
     private static void Main(string[] args)
     {
-        var wrapper = new LibraryOptimizer.LibraryOptimizer(_cancellationToken);
+        var wrapper = new LibraryOptimizer.LibraryOptimizer();
         
         if (Debugger.IsAttached)
         {
@@ -23,11 +23,11 @@ public abstract class Program
             wrapper.StartHour = DateTime.Now.Hour;
         }
        
-        _mainWorkTask = Task.Run(() => RunApp(_cancellationToken.Token));
+        _mainWorkTask = Task.Run(() => RunApp(_cancellationToken.Token, wrapper));
 
         AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) =>
         {
-            Console.WriteLine("Process exit detecteddd.");
+            Console.WriteLine("Process exit detected.");
             _cancellationToken.Cancel();
 
             if (_mainWorkTask != null)
@@ -35,7 +35,7 @@ public abstract class Program
                 Console.WriteLine("Waiting for main work to finish...");
                 try
                 {
-                    _mainWorkTask.GetAwaiter().GetResult(); // ✅ wait synchronously
+                    _mainWorkTask.GetAwaiter().GetResult();
                 }
                 catch (OperationCanceledException)
                 {
@@ -45,18 +45,16 @@ public abstract class Program
 
             Cleanup();
         };
-        _mainWorkTask.Wait(); // keep Main alive
         
+        _mainWorkTask.Wait();
     }
     
-    public static void RunApp(CancellationToken token)
+    private static void RunApp(CancellationToken token, LibraryOptimizer.LibraryOptimizer wrapper)
     {
-        // your loop or ProcessLibrary() call
         while (true)
         {
             token.ThrowIfCancellationRequested();
-            Thread.Sleep(1000);
-            Console.WriteLine("Doing workkkkk...");
+            wrapper.ProcessLibrary();
         }
     }
     

@@ -502,4 +502,9 @@ public class VideoInfo
         
         throw ex;
     }
+
+    public void EndProgramCleanUp()
+    {
+        SafeDeleteDirectory(_tempDirectory);
+    }
 }
