@@ -6,6 +6,8 @@ namespace LibraryOptimizer;
 public abstract class Program
 { 
     public static CancellationTokenSource _cancellationToken = new CancellationTokenSource(); 
+    private static Task? _mainWorkTask;
+    
     private static void Main(string[] args)
     {
         var wrapper = new LibraryOptimizer.LibraryOptimizer(_cancellationToken);
@@ -21,50 +23,45 @@ public abstract class Program
             wrapper.StartHour = DateTime.Now.Hour;
         }
        
-        Console.CancelKeyPress += (sender, eventArgs) =>
-        {
-            Console.WriteLine("SIGTERM received. Shutting down...");
-            eventArgs.Cancel = true; // Prevent immediate termination
-            _cancellationToken.Cancel();
-        };
-        
-        AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) =>
-        {
-            Console.WriteLine("Process exit detected. Running cleanup...");
-            _cancellationToken.Cancel();
-        };
+        _mainWorkTask = Task.Run(() => RunApp(_cancellationToken.Token));
 
-        try
+        AppDomain.CurrentDomain.ProcessExit += async (sender, e) =>
         {
-            Task mainTask = Task.Run(() =>
+            Console.WriteLine("Process exit detected.");
+            _cancellationToken.Cancel();
+
+            if (_mainWorkTask != null)
             {
-                // Simulate long-running work
-                while (true)
+                Console.WriteLine("Waiting for main work to finish...");
+                try
                 {
-                    _cancellationToken.Token.ThrowIfCancellationRequested();
-                    Console.WriteLine("Running...");
-                    Thread.Sleep(2000);
+                    await _mainWorkTask; // give it a chance to finish
                 }
+                catch (OperationCanceledException)
+                {
+                    Console.WriteLine("Operation Canceled...");
+                    // expected
+                }
+            }
 
-                // If you want to run the actual work:
-                // wrapper.ProcessLibrary();
-            }, _cancellationToken.Token);
+            Cleanup();
+        };
 
-            mainTask.Wait(); // Block until it completes or is cancelled
-        }
-        catch (AggregateException ex)
+        _mainWorkTask.Wait(); // keep Main alive
+        
+    }
+    
+    public static void RunApp(CancellationToken token)
+    {
+        // your loop or ProcessLibrary() call
+        while (true)
         {
-            if (ex.InnerException is OperationCanceledException)
-            {
-                Cleanup();
-            }
-            else
-            {
-                throw;
-            }
+            token.ThrowIfCancellationRequested();
+            Thread.Sleep(1000);
+            Console.WriteLine("Doing work...");
         }
     }
-
+    
     private static void Cleanup()
     {
         Console.WriteLine("Cleaning...");
