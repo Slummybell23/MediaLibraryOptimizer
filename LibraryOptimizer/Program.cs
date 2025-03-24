@@ -25,9 +25,9 @@ public abstract class Program
        
         _mainWorkTask = Task.Run(() => RunApp(_cancellationToken.Token));
 
-        AppDomain.CurrentDomain.ProcessExit += async (sender, e) =>
+        AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) =>
         {
-            Console.WriteLine("Process exit detected.");
+            Console.WriteLine("Process exit detecteddd.");
             _cancellationToken.Cancel();
 
             if (_mainWorkTask != null)
@@ -35,7 +35,7 @@ public abstract class Program
                 Console.WriteLine("Waiting for main work to finish...");
                 try
                 {
-                    await _mainWorkTask; // give it a chance to finish
+                    _mainWorkTask.GetAwaiter().GetResult(); // ✅ wait synchronously
                 }
                 catch (OperationCanceledException)
                 {
@@ -45,7 +45,6 @@ public abstract class Program
 
             Cleanup();
         };
-
         _mainWorkTask.Wait(); // keep Main alive
         
     }
@@ -57,7 +56,7 @@ public abstract class Program
         {
             token.ThrowIfCancellationRequested();
             Thread.Sleep(1000);
-            Console.WriteLine("Doing work...");
+            Console.WriteLine("Doing workkkkk...");
         }
     }
     
