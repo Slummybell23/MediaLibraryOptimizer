@@ -47,7 +47,7 @@ public class VideoInfo
     private long _inputFileSize;
     private long _outputFileSize;
     
-    private string _videoName;
+    public string VideoName;
     private string _profile8HevcFile;
     private string _rpuFile;
     private string _encodedHevc;
@@ -77,9 +77,11 @@ public class VideoInfo
         _optimizerSettings = optimizerSettings;
         
         _inputFilePath = inputFilePath;
+        VideoName = Path.GetFileNameWithoutExtension(_inputFilePath);
+
         _commandInputFilePath = ConverterBackend.FileFormatToCommand(inputFilePath);
         
-        _tempDirectory = Path.Combine(Path.GetDirectoryName(_inputFilePath)!, $"{_videoName}Incomplete");
+        _tempDirectory = Path.Combine(Path.GetDirectoryName(_inputFilePath)!, $"{VideoName}Incomplete");
         _commandTempDirectory = ConverterBackend.FileFormatToCommand(_tempDirectory);
         
         _commandOutputFile = Path.Combine(_commandTempDirectory, "converted_" + Path.GetFileName(_commandInputFilePath));
@@ -128,7 +130,6 @@ public class VideoInfo
     private void SetVideoInfoPaths()
     { 
         //Build file names (with directory path attatched)
-        _videoName = Path.GetFileNameWithoutExtension(_inputFilePath);
         _commandVideoName = Path.GetFileNameWithoutExtension(_commandInputFilePath);
         
         var directory = _commandTempDirectory;
@@ -364,7 +365,7 @@ public class VideoInfo
         //Runs command sequence
         try
         {
-            ConsoleLog.WriteLine($"Re Encoding {_videoName} To AV1: {_encodeAv1Command}");
+            ConsoleLog.WriteLine($"Re Encoding {VideoName} To AV1: {_encodeAv1Command}");
             ConverterBackend.RunCommand(_encodeAv1Command, _inputFilePath);
             
             SetFileSizes();

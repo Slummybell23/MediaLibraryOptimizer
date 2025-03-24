@@ -144,6 +144,9 @@ public class LibraryOptimizer
                     var videoInfo = new VideoInfo(inputFile, this);
                     var fileInfo = videoInfo.InputFfmpegVideoInfo;
                     
+                    if(inputFile.Contains($"Incomplete/{videoInfo.VideoName}"))
+                        continue;
+                    
                     try
                     {
                         Token.ThrowIfCancellationRequested();
@@ -307,20 +310,17 @@ public class LibraryOptimizer
     
     private bool IsFileLocked(FileInfo file)
     {
-        FileStream stream = null;
-
         try
         {
-            stream = file.Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+            var originalName = file.FullName;
+            var modifiedName = file.FullName + "rename";
+            
+            File.Move(originalName, modifiedName); 
+            File.Move(modifiedName, originalName);
         }
-        catch (IOException)
+        catch
         {
             return true;
-        }
-        finally
-        {
-            if (stream != null)
-                stream.Close();
         }
 
         return false;
