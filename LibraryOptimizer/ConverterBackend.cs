@@ -50,8 +50,8 @@ public abstract class ConverterBackend
         var regex = new Regex("(LIBRARY_OPTIMIZER_APP:)(.*)");
         var match = regex.Match(videoInfo.InputFfmpegVideoInfo).Value;
         
-        if (match.Contains("Converted=True.")
-            || (match.Contains("Converted=False.") && !retryFailed) 
+        if ((match.Contains("Converted=True.")
+            || (match.Contains("Converted=False.") && !retryFailed)) 
             && !IsProfile7(videoInfo.InputFfmpegVideoInfo))
             return false;
         if (match.Contains("Converted=False.") && retryFailed)

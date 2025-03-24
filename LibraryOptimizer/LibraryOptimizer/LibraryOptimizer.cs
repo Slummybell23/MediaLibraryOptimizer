@@ -132,6 +132,13 @@ public class LibraryOptimizer
                 ConsoleLog.WriteLine($"Processing files...");
                 foreach (var fileInfoEntry in directory)
                 {
+                    var locked = IsFileLocked(fileInfoEntry);
+                    if (locked)
+                    {
+                        ConsoleLog.WriteLine("File in use. Skipping...");
+                        continue;
+                    }
+                    
                     var inputFile = fileInfoEntry.FullName;
                     var commandFile = ConverterBackend.FileFormatToCommand(inputFile);
                     var videoInfo = new VideoInfo(inputFile, this);
@@ -149,25 +156,21 @@ public class LibraryOptimizer
                             ConsoleLog.WriteLine("Skipping file due to metadata check.");
                             continue;
                         }
+                        
+                        // try
+                        // {
+                        //     videoInfo.GetInputBitrate();
+                        // }
+                        // catch (Exception ex)
+                        // {
+                        //     ConsoleLog.WriteLine(ex.Message);
+                        //     ConsoleLog.WriteLine("File likely in use. Skipping...");
+                        // }
 
                         var converted = ConverterStatusEnum.NotConverted;
 
                         //Start timer to calculate time to convert file
                         var start = DateTime.Now;
-
-                        try
-                        {
-                            File.Open(inputFile, FileMode.Open);
-                        }
-                        catch (UnauthorizedAccessException e)
-                        {
-                            ConsoleLog.WriteLine(e.ToString());
-                        }
-                        catch (IOException e)
-                        {
-                            ConsoleLog.WriteLine("Io Exception, file in use likely... skipping");
-                            continue;
-                        }
 
                         if (EncodeAv1 || EncodeHevc)
                         {
@@ -300,5 +303,26 @@ public class LibraryOptimizer
                 Thread.Sleep(TimeSpan.FromHours(hoursTillStart));
             }
         }
+    }
+    
+    private bool IsFileLocked(FileInfo file)
+    {
+        FileStream stream = null;
+
+        try
+        {
+            stream = file.Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+        }
+        catch (IOException)
+        {
+            return true;
+        }
+        finally
+        {
+            if (stream != null)
+                stream.Close();
+        }
+
+        return false;
     }
 }
