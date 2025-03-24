@@ -40,7 +40,6 @@ public abstract class Program
                 catch (OperationCanceledException)
                 {
                     Console.WriteLine("Operation Canceled...");
-                    // expected
                 }
             }
 
