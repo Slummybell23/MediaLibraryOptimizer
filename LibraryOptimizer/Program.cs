@@ -16,10 +16,11 @@ public abstract class Program
         {
             //File paths specified to my Windows machine for debugging.
             wrapper.CheckAll = "y";
-            wrapper.Libraries = new List<string>() { "Z:\\Plex\\test" };
+            wrapper.Libraries = new List<string>() { "Z:\\Plex\\Movie" };
             wrapper.RemuxDolbyVision = true;
             wrapper.EncodeHevc = true;
             wrapper.EncodeAv1 = true;
+            wrapper.IsNvidia = true;
             wrapper.StartHour = DateTime.Now.Hour;
         }
        

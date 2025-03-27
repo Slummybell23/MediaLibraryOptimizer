@@ -11,6 +11,7 @@ public class LibraryOptimizer
     private string _dataFolder = "/data";
     private bool _retryFailed;
     private string _configDir;
+    public string _incompleteFolder = "/incomplete";
     private bool _forceStart = false;
 
     public List<string> Libraries = new List<string>();
@@ -33,6 +34,7 @@ public class LibraryOptimizer
         if (OperatingSystem.IsWindows())
         {
             _configDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
+            _incompleteFolder = "E:\\";
         }
         else if (OperatingSystem.IsLinux())
         {
@@ -90,6 +92,14 @@ public class LibraryOptimizer
             var libraryOptimzerYaml = new LibraryOptimizerYaml();
             BuildConfigFile(libraryOptimzerYaml, configFile);
         }
+        
+        _incompleteFolder = Path.Join(_incompleteFolder, "libraryOptimizerIncomplete");
+        
+        //Clean up old files
+        if(Directory.Exists(_incompleteFolder))
+            Directory.Delete(_incompleteFolder, true);
+        
+        Directory.CreateDirectory(_incompleteFolder);
     }
 
     private void BuildConfigFile(LibraryOptimizerYaml libraryOptimizerYaml, string configFile)
@@ -141,7 +151,7 @@ public class LibraryOptimizer
                     
                     var inputFile = fileInfoEntry.FullName;
                     var commandFile = ConverterBackend.FileFormatToCommand(inputFile);
-                    var videoInfo = new VideoInfo(inputFile, this);
+                    var videoInfo = new VideoInfo(inputFile,this);
                     var fileInfo = videoInfo.InputFfmpegVideoInfo;
                     
                     if(inputFile.Contains($"Incomplete/{videoInfo.VideoName}"))

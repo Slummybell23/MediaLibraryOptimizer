@@ -81,7 +81,7 @@ public class VideoInfo
 
         _commandInputFilePath = ConverterBackend.FileFormatToCommand(inputFilePath);
         
-        _tempDirectory = Path.Combine(Path.GetDirectoryName(_inputFilePath)!, $"{VideoName}Incomplete");
+        _tempDirectory = Path.Combine(optimizerSettings._incompleteFolder!, $"{VideoName}Incomplete");
         _commandTempDirectory = ConverterBackend.FileFormatToCommand(_tempDirectory);
         
         _commandOutputFile = Path.Combine(_commandTempDirectory, "converted_" + Path.GetFileName(_commandInputFilePath));
@@ -409,12 +409,9 @@ public class VideoInfo
     
     private void CreateTempFolder()
     {
-        var plexIgnoreFile = Path.Combine(_tempDirectory, ".plexignore");
-        
         SafeDeleteDirectory(_tempDirectory);
         
         Directory.CreateDirectory(_tempDirectory);
-        File.WriteAllText(plexIgnoreFile,"*"); 
     }
     
     private double ScanBitrate(string ffmpegFileInfo)
