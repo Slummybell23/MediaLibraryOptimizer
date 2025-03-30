@@ -181,7 +181,7 @@ public class LibraryOptimizer
                        var commandFile = ConverterBackend.FileFormatToCommand(inputFile);
                        var videoInfo = new VideoInfo(inputFile, this);
                        var fileInfo = videoInfo.InputFfmpegVideoInfo;
-
+                       
                        if (inputFile.Contains($"Incomplete/{videoInfo.VideoName}"))
                            continue;
 
@@ -265,6 +265,8 @@ public class LibraryOptimizer
                                }
                                else
                                {
+                                   ConsoleLog.WriteLine(videoInfo.ToString());
+                                   
                                    failedFiles.Add(inputFile);
                                }
 

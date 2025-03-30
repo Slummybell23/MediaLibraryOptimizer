@@ -1,6 +1,8 @@
 
+using System.Text;
 using System.Text.RegularExpressions;
 using LibraryOptimizer.Enums;
+using Newtonsoft.Json.Linq;
 
 namespace LibraryOptimizer;
 
@@ -524,5 +526,10 @@ public class VideoInfo
     public void EndProgramCleanUp()
     {
         SafeDeleteDirectory(_tempDirectory);
+    }
+
+    public override string ToString()
+    {
+        return JObject.FromObject(this).ToString();
     }
 }
