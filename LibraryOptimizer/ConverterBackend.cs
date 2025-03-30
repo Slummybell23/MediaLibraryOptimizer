@@ -97,7 +97,7 @@ public abstract class ConverterBackend
 
     #region Run Command
 
-    private static string RunCommandInWindows(string command, string file, bool printOutput = true)
+    private static string RunCommandInWindows(string command, string file, bool saveOutput = true, bool printOutput = false)
     {
         //Specifies starting arguments for running powershell script
         var process = new Process
@@ -113,11 +113,11 @@ public abstract class ConverterBackend
             }
         };
         
-        var output = RunProccess(file, process, printOutput);
+        var output = RunProccess(file, process, saveOutput, printOutput);
         return output;
     }
 
-    private static string RunCommandInDocker(string command, string file, bool printOutput = true)
+    private static string RunCommandInDocker(string command, string file, bool saveOutput = true, bool printOutput = false)
     {
         //Specifies starting arguments for running bash script
         var process = new Process
@@ -133,11 +133,11 @@ public abstract class ConverterBackend
             }
         };
 
-        var output = RunProccess(file, process, printOutput);
+        var output = RunProccess(file, process, saveOutput, printOutput);
         return output;
     }
 
-    private static string RunProccess(string file, Process process, bool printOutput = true)
+    private static string RunProccess(string file, Process process, bool saveOutput = true, bool printOutput = false)
     {
         process.Start();
         
@@ -158,9 +158,9 @@ public abstract class ConverterBackend
                     && !line.Contains("Skipping NAL unit"))
                 {
                     outputText += line;
-                    if(printOutput)
+                    if(saveOutput)
                         ConsoleLog.WriteLine($"{line} | File: {file}");
-                    else
+                    else if(printOutput)
                         Console.WriteLine($"{line} | File: {file}");
                 }
             }
@@ -181,9 +181,9 @@ public abstract class ConverterBackend
                     && !line.Contains("Skipping NAL unit"))
                 {
                     errorText += line;
-                    if(printOutput)
+                    if(saveOutput)
                         ConsoleLog.WriteLine($"{line} | File: {file}");
-                    else
+                    else if(printOutput)
                         Console.WriteLine($"{line} | File: {file}");
                 }
             }
@@ -201,7 +201,7 @@ public abstract class ConverterBackend
         if (errorText.Contains("At least one output file must be specified")
             || errorText.Contains("Error splitting the argument list: Option not found"))
         {
-            if (printOutput)
+            if (saveOutput)
             {
                 ConsoleLog.WriteLine("Warning: Returned a minor error (ignored):");
                 ConsoleLog.WriteLine(errorText);
@@ -216,7 +216,7 @@ public abstract class ConverterBackend
         return combinedOutput;
     }
 
-    public static string RunCommand(string command, string file, bool printOutput = true)
+    public static string RunCommand(string command, string file, bool saveOutput = true, bool printOutput = false)
     {
         Program._cancellationToken.Token.ThrowIfCancellationRequested();
         
@@ -224,11 +224,11 @@ public abstract class ConverterBackend
         //(Although preferably in a linux based docker container)
         if (OperatingSystem.IsWindows())
         {
-            return RunCommandInWindows(command, file, printOutput);
+            return RunCommandInWindows(command, file, saveOutput, printOutput);
         }
         else if (OperatingSystem.IsLinux())
         {
-            return RunCommandInDocker(command, file, printOutput);
+            return RunCommandInDocker(command, file, saveOutput, printOutput);
         }
         else
         {
