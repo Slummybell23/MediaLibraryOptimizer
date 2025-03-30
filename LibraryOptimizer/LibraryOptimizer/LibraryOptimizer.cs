@@ -345,7 +345,7 @@ public class LibraryOptimizer
             {
                 var fileInfoEntry = directory[directoryIndex];
 
-                Console.WriteLine($"Processing file: {fileInfoEntry.FullName} : INDEX: {directoryIndex}");
+                Console.WriteLine($"Processing file: {fileInfoEntry.FullName}");
 
                 var locked = IsFileLocked(fileInfoEntry);
                 if (locked)
