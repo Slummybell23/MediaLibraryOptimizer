@@ -79,7 +79,7 @@ public abstract class ConverterBackend
         }
     }
     
-    public static bool CanEncodeHevc(string filePath, string fileInfo, double bitRate)
+    public static bool CanEncodeHevc(string fileInfo)
     {
         try
         {

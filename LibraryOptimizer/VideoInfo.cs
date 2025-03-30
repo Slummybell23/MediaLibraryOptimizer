@@ -208,7 +208,7 @@ public class VideoInfo
         try
         {
             ConsoleLog.WriteLine($"Extracting HEVC stream: {_extractCommand}");
-            ConverterBackend.RunCommand(_extractCommand, _inputFilePath);
+            ConverterBackend.RunCommand(_extractCommand, _inputFilePath, false);
 
             ConsoleLog.WriteLine($"Converting to Profile 8: {_convertCommand}");
             ConverterBackend.RunCommand(_convertCommand, _inputFilePath);
@@ -222,8 +222,11 @@ public class VideoInfo
             {
                 failedOutput = ConverterBackend.RunCommand(_reEncodeHevcProfile8Command, _inputFilePath, false);
             }
-            catch
+            catch(Exception ex)
             {
+                if (ex is OperationCanceledException)
+                    throw;
+                
                 ConsoleLog.WriteLine(failedOutput);
                 throw;
             }
@@ -274,7 +277,7 @@ public class VideoInfo
         try
         {
             ConsoleLog.WriteLine($"Extracting HEVC stream: {_extractCommand}");
-            ConverterBackend.RunCommand(_extractCommand, _inputFilePath);
+            ConverterBackend.RunCommand(_extractCommand, _inputFilePath, false);
 
             ConsoleLog.WriteLine($"Converting to Profile 8: {_convertCommand}");
             ConverterBackend.RunCommand(_convertCommand, _inputFilePath);
@@ -306,7 +309,7 @@ public class VideoInfo
         try
         {
             ConsoleLog.WriteLine($"Extracting HEVC stream: {_extractProfile8HevcCommand}");
-            ConverterBackend.RunCommand(_extractProfile8HevcCommand, _inputFilePath);
+            ConverterBackend.RunCommand(_extractProfile8HevcCommand, _inputFilePath, false);
             
             ConsoleLog.WriteLine($"Extracting RPU: {_extractProfile8RpuCommand}");
             ConverterBackend.RunCommand(_extractProfile8RpuCommand, _inputFilePath);
@@ -317,8 +320,11 @@ public class VideoInfo
             {
                 failedOutput = ConverterBackend.RunCommand(_reEncodeHevcProfile8Command, _inputFilePath, false);
             }
-            catch
+            catch(Exception ex)
             {
+                if (ex is OperationCanceledException)
+                    throw;
+                
                 ConsoleLog.WriteLine(failedOutput);
                 throw;
             }
@@ -366,7 +372,21 @@ public class VideoInfo
         try
         {
             ConsoleLog.WriteLine($"Re Encoding {VideoName} To AV1: {_encodeAv1Command}");
-            ConverterBackend.RunCommand(_encodeAv1Command, _inputFilePath);
+
+            var failedOutput = string.Empty;
+            try
+            {
+                failedOutput = ConverterBackend.RunCommand(_encodeAv1Command, _inputFilePath, false);
+
+            }
+            catch (Exception ex)
+            {
+                if (ex is OperationCanceledException)
+                    throw;
+                
+                ConsoleLog.WriteLine(failedOutput);
+                throw;
+            }
             
             SetFileSizes();
             
