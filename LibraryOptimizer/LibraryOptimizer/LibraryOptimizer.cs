@@ -339,16 +339,15 @@ public class LibraryOptimizer
 
     private void FindFile(int directoryStartIndex, List<FileInfo> directory, CancellationTokenSource cancelationToken, List<FileInfo> listOfFilesToProcess, ref int dirStartCount)
     {
-        Thread.Sleep(1000);
-        for (var directoryIndex = directoryStartIndex; directoryIndex < directory.Count(); directoryIndex+= 2)
+        Thread.Sleep(3000);
+        var foundFile = string.Empty;
+        for (var directoryIndex = directoryStartIndex; directoryIndex < directory.Count(); directoryIndex+= 3)
         {
             dirStartCount++;
             try
             {
                 var fileInfoEntry = directory[directoryIndex];
-
-                Console.WriteLine($"Processing file: {fileInfoEntry.FullName}");
-
+                
                 var locked = IsFileLocked(fileInfoEntry);
                 if (locked)
                 {
@@ -383,6 +382,7 @@ public class LibraryOptimizer
                     {
                         cancelationToken.Cancel();
                         listOfFilesToProcess.Add(fileInfoEntry);
+                        foundFile = fileInfoEntry.FullName;
                         break;
                     }
                 }
@@ -393,6 +393,7 @@ public class LibraryOptimizer
                     {
                         cancelationToken.Cancel();
                         listOfFilesToProcess.Add(fileInfoEntry);
+                        foundFile = fileInfoEntry.FullName;
                         break;
                     }
                 }
@@ -403,6 +404,7 @@ public class LibraryOptimizer
                     {
                         cancelationToken.Cancel();
                         listOfFilesToProcess.Add(fileInfoEntry);
+                        foundFile = fileInfoEntry.FullName;
                         break;
                     }
                 }
@@ -413,6 +415,7 @@ public class LibraryOptimizer
                     {
                         cancelationToken.Cancel();
                         listOfFilesToProcess.Add(fileInfoEntry);
+                        foundFile = fileInfoEntry.FullName;
                         break;
                     }
                 }
@@ -426,6 +429,8 @@ public class LibraryOptimizer
                 break;
             }
         }
+        
+        Console.WriteLine($"Found File to Optimize: {foundFile}");
     }
 
     private bool IsFileLocked(FileInfo file)
