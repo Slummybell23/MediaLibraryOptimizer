@@ -470,7 +470,7 @@ public class VideoInfo
         {
             ConsoleLog.WriteLine($"Inserting metadata 'LIBRARY_OPTIMIZER_APP=Converted={converted}. Reason={_failedReason}' into {_inputFilePath}");
             ConsoleLog.WriteLine(insertMetadataCommand);
-            failOutput = ConverterBackend.RunCommand(insertMetadataCommand, _inputFilePath, false);
+            failOutput = ConverterBackend.RunCommand(insertMetadataCommand, _inputFilePath, false, true);
             
             ConsoleLog.WriteLine("Writing file to original path...");
             ConsoleLog.WriteLine("DO NOT TURN OFF PROGRAM");
