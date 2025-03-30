@@ -160,6 +160,8 @@ public abstract class ConverterBackend
                     outputText += line;
                     if(printOutput)
                         ConsoleLog.WriteLine($"{line} | File: {file}");
+                    else
+                        Console.WriteLine($"{line} | File: {file}");
                 }
             }
         });
@@ -181,6 +183,8 @@ public abstract class ConverterBackend
                     errorText += line;
                     if(printOutput)
                         ConsoleLog.WriteLine($"{line} | File: {file}");
+                    else
+                        Console.WriteLine($"{line} | File: {file}");
                 }
             }
         });
@@ -201,7 +205,6 @@ public abstract class ConverterBackend
             {
                 ConsoleLog.WriteLine("Warning: Returned a minor error (ignored):");
                 ConsoleLog.WriteLine(errorText);
-
             }
         }
         else if (process.ExitCode != 0)
