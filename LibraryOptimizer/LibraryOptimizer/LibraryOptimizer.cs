@@ -352,14 +352,27 @@ public class LibraryOptimizer
                 var locked = IsFileLocked(fileInfoEntry);
                 if (locked)
                 {
+                    Console.WriteLine($"Skipping {fileInfoEntry.FullName}. File in use.");
                     continue;
                 }
 
-                var videoInfo = new VideoInfo(fileInfoEntry.FullName, this);
+                VideoInfo videoInfo;
+                try
+                {
+                    videoInfo = new VideoInfo(fileInfoEntry.FullName, this);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    Console.WriteLine($"Skipping {fileInfoEntry.FullName}");
+                    continue;
+                }
+                
                 var fileInfo = videoInfo.InputFfmpegVideoInfo;
 
                 if (!ConverterBackend.ShouldBeProcessed(videoInfo, _retryFailed))
                 {
+                    Console.WriteLine($"Skipping {fileInfoEntry.FullName} due to metadata.");
                     continue;
                 }
 
@@ -404,10 +417,12 @@ public class LibraryOptimizer
                     }
                 }
 
+                Console.WriteLine($"Skipping {fileInfoEntry.FullName}");
                 cancelationToken.Token.ThrowIfCancellationRequested();
             }
             catch (OperationCanceledException ex)
             {
+                Console.WriteLine($"Thread Canceled.");
                 break;
             }
         }
