@@ -259,8 +259,8 @@ public class VideoInfo
 
             ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
             
-            _converterStatusEnum = ConverterStatusEnum.Success;
-            return ConverterStatusEnum.Success;
+            _converterStatusEnum = ConverterStatusEnum.Failed;
+            return ConverterStatusEnum.Failed;
         }
         catch (Exception ex)
         {
