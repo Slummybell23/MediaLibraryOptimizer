@@ -2,14 +2,17 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using LibraryOptimizer.Enums;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace LibraryOptimizer;
 
 public class VideoInfo
 {
+    [JsonProperty("optimizerSettings")]
     private LibraryOptimizer.LibraryOptimizer _optimizerSettings;
-    
+        
+    [JsonProperty("inputBitRate")]
     private double _inputBitRate;
 
     public double GetInputBitrate()
@@ -22,6 +25,7 @@ public class VideoInfo
         _inputBitRate = ScanBitrate(InputFfmpegVideoInfo);
     }
 
+    [JsonProperty("outputBitRate")]
     private double _outputBitRate;
 
     public double GetOutputBitrate()
@@ -33,44 +37,89 @@ public class VideoInfo
     {
         _outputBitRate = ScanBitrate(_outputFfmpegVideoInfo);
     }
-    
+        
     public string InputFfmpegVideoInfo;
+
+    [JsonProperty("outputFfmpegVideoInfo")]
     private string _outputFfmpegVideoInfo;
 
+    [JsonProperty("converterStatus")]
     private ConverterStatusEnum _converterStatusEnum = ConverterStatusEnum.NotConverted;
-    
+        
+    [JsonProperty("inputFilePath")]
     private string _inputFilePath;
+
+    [JsonProperty("commandInputFilePath")]
     private string _commandInputFilePath;
+
+    [JsonProperty("commandOutputFile")]
     private string _commandOutputFile;
+
+    [JsonProperty("outputFile")]
     private string _outputFile;
+
+    [JsonProperty("tempDirectory")]
     private string _tempDirectory;
+
+    [JsonProperty("commandTempDirectory")]
     private string _commandTempDirectory;
 
+    [JsonProperty("inputFileSize")]
     private long _inputFileSize;
+
+    [JsonProperty("outputFileSize")]
     private long _outputFileSize;
-    
+        
     public string VideoName;
+        
+    [JsonProperty("profile8HevcFile")]
     private string _profile8HevcFile;
+
+    [JsonProperty("rpuFile")]
     private string _rpuFile;
+
+    [JsonProperty("encodedHevc")]
     private string _encodedHevc;
+
+    [JsonProperty("encodedProfile8HevcFile")]
     private string _encodedProfile8HevcFile;
+
+    [JsonProperty("hevcFile")]
     private string _hevcFile;
 
+    [JsonProperty("extractCommand")]
     private string _extractCommand;
+
+    [JsonProperty("extractProfile8HevcCommand")]
     private string _extractProfile8HevcCommand;
 
+    [JsonProperty("convertCommand")]
     private string _convertCommand;
 
+    [JsonProperty("reEncodeHevcProfile8Command")]
     private string _reEncodeHevcProfile8Command;
+
+    [JsonProperty("encodeAv1Command")]
     private string _encodeAv1Command;
+
+    [JsonProperty("extractProfile8RpuCommand")]
     private string _extractProfile8RpuCommand;
+
+    [JsonProperty("injectRpu")]
     private string _injectRpu;
 
+    [JsonProperty("remuxCommandEncoded")]
     private string _remuxCommandEncoded;
+
+    [JsonProperty("remuxCommand")]
     private string _remuxCommand;
 
+    [JsonProperty("failedReason")]
     private string _failedReason = string.Empty;
+
+    [JsonProperty("commandVideoName")]
     private string _commandVideoName;
+
 
     #region Constructors
 
@@ -530,6 +579,11 @@ public class VideoInfo
 
     public override string ToString()
     {
-        return JObject.FromObject(this).ToString();
+        var jObject = JObject.FromObject(this);
+        jObject.Add("inputFilePath", _inputFilePath);
+        
+        
+        
+        return jObject.ToString();
     }
 }
