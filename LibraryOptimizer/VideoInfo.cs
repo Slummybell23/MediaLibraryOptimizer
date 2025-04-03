@@ -580,10 +580,6 @@ public class VideoInfo
     public override string ToString()
     {
         var jObject = JObject.FromObject(this);
-        jObject.Add("inputFilePath", _inputFilePath);
-        
-        
-        
         return jObject.ToString();
     }
 }
