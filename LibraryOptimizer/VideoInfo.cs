@@ -558,7 +558,7 @@ public class VideoInfo
         var fileToBuildMetadata = _commandInputFilePath;
         var command = $"ffmpeg -i '{_commandInputFilePath}' -hide_banner -loglevel info";
         var converted = false;
-        if (_converterStatusEnum != ConverterStatusEnum.Failed)
+        if (_converterStatusEnum != ConverterStatusEnum.Failed || _converterStatusEnum != ConverterStatusEnum.OutputOversized)
         {
             command = $"ffmpeg -i '{_commandOutputFile}' -hide_banner -loglevel info";
             fileToBuildMetadata = _commandOutputFile;
