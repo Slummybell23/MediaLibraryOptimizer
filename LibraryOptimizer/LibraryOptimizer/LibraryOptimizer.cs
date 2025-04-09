@@ -275,10 +275,7 @@ public class LibraryOptimizer
 
                                ConsoleLog.WriteLine($"Conversion Time: {timeCost.ToString()}");
 
-                               if (converted == ConverterStatusEnum.Success)
-                                   ConsoleLog.LogFile(inputFile, true);
-                               else
-                                   ConsoleLog.LogFile(inputFile, false);
+                               ConsoleLog.LogFile(inputFile, converted);
                            }
 
                            if (converted == ConverterStatusEnum.NotConverted)

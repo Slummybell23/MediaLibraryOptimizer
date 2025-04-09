@@ -4,5 +4,6 @@ public enum ConverterStatusEnum
 {
     NotConverted,
     Success,
-    Failed
+    Failed,
+    OutputOversized
 }

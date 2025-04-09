@@ -396,7 +396,7 @@ public class VideoInfo
                 ConverterBackend.DeleteFile(_outputFile);
 
                 _failedReason = "Output file larger than input.";
-                _converterStatusEnum = ConverterStatusEnum.Failed;
+                _converterStatusEnum = ConverterStatusEnum.OutputOversized;
                 return ConverterStatusEnum.Failed;
             }
             
@@ -447,7 +447,7 @@ public class VideoInfo
                 ConverterBackend.DeleteFile(_outputFile);
 
                 _failedReason = "Output file larger than input.";
-                _converterStatusEnum = ConverterStatusEnum.Failed;
+                _converterStatusEnum = ConverterStatusEnum.OutputOversized;
                 return ConverterStatusEnum.Failed;
             }
             ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
