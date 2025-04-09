@@ -167,15 +167,20 @@ public class VideoInfo
         _remuxCommand = $"mkvmerge -o '{_commandOutputFile}' -D '{_commandInputFilePath}' '{_profile8HevcFile}'";
         //======================Dolby Vision 7 -> 8 Remuxing=============================
         
-        if(_optimizerSettings.IsNvidia)
-            //NVIDIA NVENC
-            _reEncodeHevcProfile8Command = $"ffmpeg -i '{_profile8HevcFile}' -c:v hevc_nvenc -preset p7 -cq 3 -c:a copy '{_encodedHevc}'";
-        else
-            //INTEL ARC Hopefully encodes well now
-            _reEncodeHevcProfile8Command = $"ffmpeg -hwaccel qsv -i '{_profile8HevcFile}' -c:v hevc_qsv -preset 1 -global_quality 6 -scenario 3 -c:a copy '{_encodedHevc}'";
+        SetEncodeHevcCommand(0);
         
         //Generate Temp Folder
         CreateTempFolder();
+    }
+
+    private void SetEncodeHevcCommand(int adjustedQuality)
+    {
+        if(_optimizerSettings.IsNvidia)
+            //NVIDIA NVENC
+            _reEncodeHevcProfile8Command = $"ffmpeg -i '{_profile8HevcFile}' -c:v hevc_nvenc -preset p7 -cq {3 + adjustedQuality} -c:a copy '{_encodedHevc}'";
+        else
+            //INTEL ARC Hopefully encodes well now
+            _reEncodeHevcProfile8Command = $"ffmpeg -hwaccel qsv -i '{_profile8HevcFile}' -c:v hevc_qsv -preset 1 -global_quality {6 + adjustedQuality} -scenario 3 -c:a copy '{_encodedHevc}'";
     }
 
     private void SetVideoInfoPaths()
@@ -267,20 +272,7 @@ public class VideoInfo
             ConsoleLog.WriteLine($"Extracting RPU: {_extractProfile8RpuCommand}");
             ConverterBackend.RunCommand(_extractProfile8RpuCommand, _inputFilePath);
 
-            ConsoleLog.WriteLine($"Encoding HEVC: {_reEncodeHevcProfile8Command}");
-            var failedOutput = string.Empty;
-            try
-            {
-                failedOutput = ConverterBackend.RunCommand(_reEncodeHevcProfile8Command, _inputFilePath, false, true);
-            }
-            catch(Exception ex)
-            {
-                if (ex is OperationCanceledException)
-                    throw;
-                
-                ConsoleLog.WriteLine(failedOutput);
-                throw;
-            }
+            RetryEncodeHevc(_profile8HevcFile);
             
             ConsoleLog.WriteLine($"Injecting RPU: {_injectRpu}");
             ConverterBackend.RunCommand(_injectRpu, _inputFilePath);
@@ -365,21 +357,8 @@ public class VideoInfo
             ConsoleLog.WriteLine($"Extracting RPU: {_extractProfile8RpuCommand}");
             ConverterBackend.RunCommand(_extractProfile8RpuCommand, _inputFilePath);
 
-            ConsoleLog.WriteLine($"Encoding HEVC: {_reEncodeHevcProfile8Command}");
-            var failedOutput = string.Empty;
-            try
-            {
-                failedOutput = ConverterBackend.RunCommand(_reEncodeHevcProfile8Command, _inputFilePath, false, true);
-            }
-            catch(Exception ex)
-            {
-                if (ex is OperationCanceledException)
-                    throw;
-                
-                ConsoleLog.WriteLine(failedOutput);
-                throw;
-            }
-            
+            RetryEncodeHevc(_profile8HevcFile);
+
             ConverterBackend.DeleteFile(_profile8HevcFile);
             
             ConsoleLog.WriteLine($"Injecting RPU: {_injectRpu}");
@@ -416,7 +395,76 @@ public class VideoInfo
             return ConverterStatusEnum.Failed;
         }
     }
-    
+
+    private void RetryEncodeHevc(string inputHevcFile)
+    {
+        ConsoleLog.WriteLine($"Encoding HEVC: {_reEncodeHevcProfile8Command}");
+        
+        var inputHevcFileSize = new FileInfo(inputHevcFile).Length/1000000;
+        
+        if (inputHevcFileSize > 60000)
+        {
+            ConsoleLog.WriteLine($"Input HEVC file is larger than 60Gb, {inputHevcFileSize} mb. Retry 3 times to shrink.");
+            var retryCount = 0;
+            bool isOversize = true;
+            bool isUndersize = false;
+            do
+            {
+                long outputHevcFileSize;
+                var failedOutput = string.Empty;
+                try
+                {
+                    failedOutput = ConverterBackend.RunCommand(_reEncodeHevcProfile8Command, _inputFilePath, false, true);
+                    outputHevcFileSize = new FileInfo(_encodedHevc).Length/1000000;
+
+                }
+                catch(Exception ex)
+                {
+                    if (ex is OperationCanceledException)
+                        throw;
+                
+                    ConsoleLog.WriteLine(failedOutput);
+                    throw;
+                }
+                
+                ConsoleLog.WriteLine($"Output HEVC file is {outputHevcFileSize} mb");
+                isOversize = outputHevcFileSize > inputHevcFileSize * 0.60;
+                
+                //retryCount == 2 
+                isUndersize = outputHevcFileSize < inputHevcFileSize * 0.40 && retryCount == 0;
+                if (isOversize)
+                {
+                    ConsoleLog.WriteLine($"Retry to shrink file...");
+                    SetEncodeHevcCommand(3);
+                }
+                else if(isUndersize)
+                {
+                    ConsoleLog.WriteLine($"File too small, quality loss possibly too high, retrying at higher value...");
+                    SetEncodeHevcCommand(-1);
+                }
+
+                retryCount++;
+            } while ((isOversize || isUndersize) && retryCount < 5);
+        }
+        else
+        {
+            var failedOutput = string.Empty;
+            try
+            {
+                failedOutput = ConverterBackend.RunCommand(_reEncodeHevcProfile8Command, _inputFilePath, false, true);
+
+            }
+            catch(Exception ex)
+            {
+                if (ex is OperationCanceledException)
+                    throw;
+                
+                ConsoleLog.WriteLine(failedOutput);
+                throw;
+            }
+        }
+    }
+
     public ConverterStatusEnum EncodeAv1()
     {
         //Runs command sequence
@@ -471,11 +519,22 @@ public class VideoInfo
 
     private void SetFileSizes()
     {
-        _inputFileSize = new FileInfo(_inputFilePath).Length/1000000;
-        _outputFileSize = new FileInfo(_outputFile).Length/1000000;
-
+        SetInputFileSize();
+        SetOutputFileSize();
+        
         ConsoleLog.WriteLine($"Old file size: {_inputFileSize} mb");
         ConsoleLog.WriteLine($"New file size: {_outputFileSize} mb");
+    }
+
+    private void SetInputFileSize()
+    {
+        _inputFileSize = new FileInfo(_inputFilePath).Length/1000000;
+    }
+
+    private void SetOutputFileSize()
+    {
+        _outputFileSize = new FileInfo(_outputFile).Length/1000000;
+
     }
     
     private void CreateTempFolder()
