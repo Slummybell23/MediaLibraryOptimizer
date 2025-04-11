@@ -408,6 +408,7 @@ public class VideoInfo
             var retryCount = 0;
             bool isOversize = true;
             bool isUndersize = false;
+            var adjustment = 0;
             do
             {
                 long outputHevcFileSize;
@@ -434,13 +435,15 @@ public class VideoInfo
                 isUndersize = outputHevcFileSize < inputHevcFileSize * 0.40 && retryCount == 0;
                 if (isOversize)
                 {
+                    adjustment += 3;
                     ConsoleLog.WriteLine($"Retry to shrink file...");
-                    SetEncodeHevcCommand(3);
+                    SetEncodeHevcCommand(adjustment);
                 }
                 else if(isUndersize)
                 {
+                    adjustment--;
                     ConsoleLog.WriteLine($"File too small, quality loss possibly too high, retrying at higher value...");
-                    SetEncodeHevcCommand(-1);
+                    SetEncodeHevcCommand(adjustment);
                 }
 
                 retryCount++;
