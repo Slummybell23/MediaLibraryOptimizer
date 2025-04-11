@@ -376,7 +376,7 @@ public class VideoInfo
 
                 _failedReason = "Output file larger than input.";
                 _converterStatusEnum = ConverterStatusEnum.OutputOversized;
-                return ConverterStatusEnum.Failed;
+                return ConverterStatusEnum.OutputOversized;
             }
             
             ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
@@ -496,7 +496,7 @@ public class VideoInfo
 
                 _failedReason = "Output file larger than input.";
                 _converterStatusEnum = ConverterStatusEnum.OutputOversized;
-                return ConverterStatusEnum.Failed;
+                return ConverterStatusEnum.OutputOversized;
             }
             ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
 
