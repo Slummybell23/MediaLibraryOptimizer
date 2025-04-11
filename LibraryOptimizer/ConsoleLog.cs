@@ -55,13 +55,13 @@ public static class ConsoleLog
         {
             case ConverterStatusEnum.Failed:
                 conversionStatus = "Converted Errored";
-                return;
+                break;
             case ConverterStatusEnum.Success:
                 conversionStatus = "Converted Success";
-                return;
+                break;
             case ConverterStatusEnum.OutputOversized:
                 conversionStatus = "Converted Output Oversized";
-                return;
+                break;
         }
         
         var video = Path.GetFileNameWithoutExtension(file) + " " + conversionStatus;
