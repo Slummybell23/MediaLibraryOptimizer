@@ -300,8 +300,8 @@ public class VideoInfo
 
             ConsoleLog.WriteLine($"Conversion complete: {_outputFile}");
             
-            _converterStatusEnum = ConverterStatusEnum.Failed;
-            return ConverterStatusEnum.Failed;
+            _converterStatusEnum = ConverterStatusEnum.OutputOversized;
+            return ConverterStatusEnum.OutputOversized;
         }
         catch (Exception ex)
         {
