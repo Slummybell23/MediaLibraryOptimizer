@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text;
+using LibraryOptimizer.Enums;
 
 namespace LibraryOptimizer;
 
@@ -42,14 +43,27 @@ public static class ConsoleLog
     }
 
     // Generates a log file and folder containing info from WriteLine() (static method).
-    public static void LogFile(string file, bool? converted)
+    public static void LogFile(string file, ConverterStatusEnum convertedStatus)
     {
         var formattedDate = DateTime.Today.ToString("MM-dd-yyyy");
         var logFolder = Path.Combine(_configDir, "logs", formattedDate);
 
         Directory.CreateDirectory(logFolder);
 
-        var conversionStatus = converted == true ? "Converted Successfully" : "Converted False";
+        var conversionStatus = string.Empty;
+        switch (convertedStatus)
+        {
+            case ConverterStatusEnum.Failed:
+                conversionStatus = "Converted Errored";
+                break;
+            case ConverterStatusEnum.Success:
+                conversionStatus = "Converted Success";
+                break;
+            case ConverterStatusEnum.OutputOversized:
+                conversionStatus = "Converted Output Oversized";
+                break;
+        }
+        
         var video = Path.GetFileNameWithoutExtension(file) + " " + conversionStatus;
 
         var logFile = Path.Combine(logFolder, $"{video}.txt");
