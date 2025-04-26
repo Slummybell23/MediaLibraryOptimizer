@@ -365,6 +365,11 @@ public class LibraryOptimizer
                 }
                 catch (Exception e)
                 {
+                    if (e is OperationCanceledException)
+                    {
+                        Program._cancellationToken.Token.ThrowIfCancellationRequested();
+                    }
+                    
                     Console.WriteLine(e);
                     Console.WriteLine($"Skipping {fileInfoEntry.FullName}");
                     continue;
@@ -428,6 +433,8 @@ public class LibraryOptimizer
             }
             catch (OperationCanceledException ex)
             {
+                Program._cancellationToken.Token.ThrowIfCancellationRequested();
+                
                 Console.WriteLine($"Thread Canceled.");
                 break;
             }
