@@ -411,6 +411,8 @@ public class VideoInfo
             var adjustment = 0;
             do
             {
+                ConverterBackend.DeleteFile(_encodedHevc);
+                
                 long outputHevcFileSize;
                 var failedOutput = string.Empty;
                 try
