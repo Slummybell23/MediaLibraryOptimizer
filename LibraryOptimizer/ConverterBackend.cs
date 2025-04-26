@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using System.Text.RegularExpressions;
 using LibraryOptimizer.Enums;
 
@@ -113,7 +114,7 @@ public abstract class ConverterBackend
             }
         };
         
-        var output = RunProccess(file, process, saveOutput, printOutput);
+        var output = RunProcess(file, process, saveOutput, printOutput);
         return output;
     }
 
@@ -133,89 +134,89 @@ public abstract class ConverterBackend
             }
         };
 
-        var output = RunProccess(file, process, saveOutput, printOutput);
+        var output = RunProcess(file, process, saveOutput, printOutput);
         return output;
     }
 
-    private static string RunProccess(string file, Process process, bool saveOutput = true, bool printOutput = false)
+    private static string RunProcess(string file, Process process, bool saveOutput = true, bool printOutput = false)
     {
+        var token = Program._cancellationToken.Token;
+        
+        using var registration = token.Register(() => {
+            try
+            {
+                process.Kill(entireProcessTree: true);
+            } 
+            catch { }
+        });
+
+        var outputBuilder = new StringBuilder();
+        var errorBuilder  = new StringBuilder();
+
+        process.OutputDataReceived += (_, programOutput) =>
+        {
+            if (programOutput.Data is null) return;
+            if (programOutput.Data.Contains("Last message repeated") || programOutput.Data.Contains("Skipping NAL unit"))
+                return;
+            outputBuilder.AppendLine(programOutput.Data);
+            if (saveOutput)
+                ConsoleLog.WriteLine(programOutput.Data);
+            else if (printOutput)
+                Console.WriteLine($"{programOutput.Data} | File: {file}");
+        };
+        process.ErrorDataReceived += (_, e) =>
+        {
+            if (e.Data is null) return;
+            if (e.Data.Contains("Last message repeated") || e.Data.Contains("Skipping NAL unit"))
+                return;
+            errorBuilder.AppendLine(e.Data);
+            if (saveOutput)
+                ConsoleLog.WriteLine(e.Data);
+            else if (printOutput)
+                Console.WriteLine($"{e.Data} | File: {file}");
+        };
+
         process.Start();
-        
-        //Generates 2 threaded tasks to monitor the output stream of the script file.
-        
-        //Monitors non erroring output.
-        var outputText = "";
-        var outputTask = Task.Run(() =>
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
+
+        try
         {
-            string line;
-            while ((line = process.StandardOutput.ReadLine()!) != null)
-            {
-                Program._cancellationToken.Token.ThrowIfCancellationRequested();
-                
-                //Ignores specific outputs
-                //Allowed outputs get logged to a logFile in the ConsoleLog object.
-                if (!line.Contains("Last message repeated") 
-                    && !line.Contains("Skipping NAL unit"))
-                {
-                    outputText += line;
-                    if(saveOutput)
-                        ConsoleLog.WriteLine($"{line} | File: {file}");
-                    else if(printOutput)
-                        Console.WriteLine($"{line} | File: {file}");
-                }
-            }
-        });
-        
-        //Monitors error output.
-        var errorText = "";
-        var errorTask = Task.Run(() =>
+            process.WaitForExitAsync(token).GetAwaiter().GetResult();
+        }
+        catch (OperationCanceledException)
         {
-            string line;
-            while ((line = process.StandardError.ReadLine()!) != null)
+            try
             {
-                Program._cancellationToken.Token.ThrowIfCancellationRequested();
+                process.Kill(entireProcessTree: true);
+            } 
+            catch { }
+            throw;
+        }
 
-                //Ignores specific outputs
-                //Allowed outputs get logged to a logFile in the ConsoleLog object.
-                if (!line.Contains("Last message repeated") 
-                    && !line.Contains("Skipping NAL unit"))
-                {
-                    errorText += line;
-                    if(saveOutput)
-                        ConsoleLog.WriteLine($"{line} | File: {file}");
-                    else if(printOutput)
-                        Console.WriteLine($"{line} | File: {file}");
-                }
-            }
-        });
+        // Combine captured output
+        var combined = outputBuilder.ToString() + errorBuilder.ToString();
 
-        //Does not execute next lines until script finishes running.
-        process.WaitForExit();
-        
-        //Waits for the output and error monitors to end.
-        Task.WaitAll(outputTask, errorTask);
-            
-        var combinedOutput = outputText + errorText;
-
-        //Ignores FFmpeg warning.
-        if (errorText.Contains("At least one output file must be specified")
-            || errorText.Contains("Error splitting the argument list: Option not found"))
+        // Handle FFmpeg warnings
+        var err = errorBuilder.ToString();
+        if (err.Contains("At least one output file must be specified") 
+            || err.Contains("Error splitting the argument list: Option not found"))
         {
             if (saveOutput)
             {
                 ConsoleLog.WriteLine("Warning: Returned a minor error (ignored):");
-                ConsoleLog.WriteLine(errorText);
+                ConsoleLog.WriteLine(err);
             }
         }
         else if (process.ExitCode != 0)
         {
-            throw new Exception($"Command failed with exit code {process.ExitCode}: {combinedOutput}");
+            throw new Exception($"Command failed with exit code {process.ExitCode}: {combined}");
         }
 
         ConsoleLog.WriteLine("Process completed successfully.");
-        return combinedOutput;
+        return combined;
     }
-
+    
     public static string RunCommand(string command, string file, bool saveOutput = true, bool printOutput = false)
     {
         Program._cancellationToken.Token.ThrowIfCancellationRequested();

@@ -178,7 +178,6 @@ public class LibraryOptimizer
                        }
 
                        var inputFile = fileInfoEntry.FullName;
-                       var commandFile = ConverterBackend.FileFormatToCommand(inputFile);
                        var videoInfo = new VideoInfo(inputFile, this);
                        var fileInfo = videoInfo.InputFfmpegVideoInfo;
                        
@@ -198,7 +197,7 @@ public class LibraryOptimizer
                                continue;
                            }
 
-                           var converted = ConverterStatusEnum.NotConverted;
+                           var convertedEnum = ConverterStatusEnum.NotConverted;
 
                            //Start timer to calculate time to convert file
                            var start = DateTime.Now;
@@ -213,53 +212,59 @@ public class LibraryOptimizer
                                //Check if file is not av1, and not dolby vision
                                if (ConverterBackend.CanEncodeAv1(fileInfo))
                                {
-                                   converted = ConverterBackend.EncodeAv1(videoInfo);
+                                   ConsoleLog.WriteLine($"Encode AV1: {inputFile}");
+
+                                   convertedEnum = ConverterBackend.EncodeAv1(videoInfo);
 
                                    ConsoleLog.WriteLine($"Starting bitrate: {videoInfo.GetInputBitrate()} kbps");
                                    ConsoleLog.WriteLine($"Ending bitrate: {videoInfo.GetOutputBitrate()} kbps");
                                }
                            }
 
-                           if (RemuxDolbyVision && !EncodeHevc && converted == ConverterStatusEnum.NotConverted)
+                           if (RemuxDolbyVision && !EncodeHevc && convertedEnum == ConverterStatusEnum.NotConverted)
                            {
                                if (ConverterBackend.IsProfile7(fileInfo))
                                {
                                    ConsoleLog.WriteLine($"Dolby Vision Profile 7 detected in: {inputFile}");
-
-                                   converted = ConverterBackend.Remux(videoInfo);
+                                   ConsoleLog.WriteLine($"Remux: {inputFile}");
+                                   
+                                   convertedEnum = ConverterBackend.Remux(videoInfo);
 
                                    ConsoleLog.WriteLine($"Starting bitrate: {videoInfo.GetInputBitrate()} kbps");
                                    ConsoleLog.WriteLine($"Ending bitrate: {videoInfo.GetOutputBitrate()} kbps");
                                }
                            }
 
-                           if (RemuxDolbyVision && EncodeHevc && converted == ConverterStatusEnum.NotConverted)
+                           if (RemuxDolbyVision && EncodeHevc && convertedEnum == ConverterStatusEnum.NotConverted)
                            {
                                if (ConverterBackend.IsProfile7(fileInfo))
                                {
                                    ConsoleLog.WriteLine($"Dolby Vision Profile 7 detected in: {inputFile}");
-
-                                   converted = ConverterBackend.RemuxAndEncodeHevc(videoInfo);
+                                   ConsoleLog.WriteLine($"Remux and Encode HEVC: {inputFile}");
+                                       
+                                   convertedEnum = ConverterBackend.RemuxAndEncodeHevc(videoInfo);
 
                                    ConsoleLog.WriteLine($"Starting bitrate: {videoInfo.GetInputBitrate()} kbps");
                                    ConsoleLog.WriteLine($"Ending bitrate: {videoInfo.GetOutputBitrate()} kbps");
                                }
                            }
 
-                           if (EncodeHevc && converted == ConverterStatusEnum.NotConverted)
+                           if (EncodeHevc && convertedEnum == ConverterStatusEnum.NotConverted)
                            {
                                if (ConverterBackend.CanEncodeHevc(fileInfo))
                                {
-                                   converted = ConverterBackend.EncodeHevc(videoInfo);
+                                   ConsoleLog.WriteLine($"Encode HEVC: {inputFile}");
+
+                                   convertedEnum = ConverterBackend.EncodeHevc(videoInfo);
 
                                    ConsoleLog.WriteLine($"Starting bitrate: {videoInfo.GetInputBitrate()} kbps");
                                    ConsoleLog.WriteLine($"Ending bitrate: {videoInfo.GetOutputBitrate()} kbps");
                                }
                            }
 
-                           if (converted != ConverterStatusEnum.NotConverted)
+                           if (convertedEnum != ConverterStatusEnum.NotConverted)
                            {
-                               if (converted == ConverterStatusEnum.Success)
+                               if (convertedEnum == ConverterStatusEnum.Success)
                                {
                                    convertedFiles.Add(inputFile);
                                }
@@ -275,10 +280,10 @@ public class LibraryOptimizer
 
                                ConsoleLog.WriteLine($"Conversion Time: {timeCost.ToString()}");
 
-                               ConsoleLog.LogFile(inputFile, converted);
+                               ConsoleLog.LogFile(inputFile, convertedEnum);
                            }
 
-                           if (converted == ConverterStatusEnum.NotConverted)
+                           if (convertedEnum == ConverterStatusEnum.NotConverted)
                            {
                                ConsoleLog.WriteLine($"Skipping: {inputFile}");
                                notProcessed++;
@@ -286,8 +291,9 @@ public class LibraryOptimizer
                        }
                        catch (OperationCanceledException ex)
                        {
+                           Console.WriteLine("Operation Canceled...");
                            videoInfo.EndProgramCleanUp();
-                           throw;
+                           throw; 
                        }
                    }
                 }
