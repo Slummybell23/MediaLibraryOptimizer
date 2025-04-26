@@ -415,6 +415,7 @@ public class VideoInfo
                 var failedOutput = string.Empty;
                 try
                 {
+                    ConsoleLog.WriteLine($"Encoding HEVC stream: {_reEncodeHevcProfile8Command}");
                     failedOutput = ConverterBackend.RunCommand(_reEncodeHevcProfile8Command, _inputFilePath, false, true);
                     outputHevcFileSize = new FileInfo(_encodedHevc).Length/1000000;
 
@@ -436,13 +437,13 @@ public class VideoInfo
                 if (isOversize)
                 {
                     adjustment += 3;
-                    ConsoleLog.WriteLine($"Retry to shrink file...");
+                    ConsoleLog.WriteLine($"Retry to shrink file... Adjustment: {adjustment}");
                     SetEncodeHevcCommand(adjustment);
                 }
                 else if(isUndersize)
                 {
                     adjustment--;
-                    ConsoleLog.WriteLine($"File too small, quality loss possibly too high, retrying at higher value...");
+                    ConsoleLog.WriteLine($"File too small, quality loss possibly too high, retrying at higher value... Adjustment: {adjustment}");
                     SetEncodeHevcCommand(adjustment);
                 }
 
