@@ -205,15 +205,15 @@ public class VideoInfo
         if (_optimizerSettings.IsNvidia)
         {
             //NVIDIA NVENC
-            if (_inputBitRate >= 12)
+            if (_inputBitRate >= 12000)
             {
                 _encodeAv1Command = $"ffmpeg -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 25 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
-            else if (_inputBitRate <= 12 && _inputBitRate >= 7)
+            else if (_inputBitRate <= 12000 && _inputBitRate >= 7000)
             {
                 _encodeAv1Command = $"ffmpeg -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 29 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
-            else if (_inputBitRate <= 7)
+            else if (_inputBitRate <= 7000)
             {
                 _encodeAv1Command = $"ffmpeg -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_nvenc -cq 32 -preset p7 -c:a copy -c:s copy -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
@@ -229,24 +229,24 @@ public class VideoInfo
             {
                 _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 1 -scenario 3 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
-            else if (_inputBitRate >= 50 && (_optimizerSettings.Quality == QualityEnum.HighQuality))
+            else if (_inputBitRate >= 50000 && (_optimizerSettings.Quality == QualityEnum.HighQuality))
             {
                 _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 1 -scenario 3 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
-            else if (_inputBitRate <= 50 && _inputBitRate >= 31 && (_optimizerSettings.Quality == QualityEnum.HighQuality))
+            else if (_inputBitRate <= 50000 && _inputBitRate >= 31000 && (_optimizerSettings.Quality == QualityEnum.HighQuality))
             {
                 _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 5 -scenario 3 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
-            else if (_inputBitRate <= 31 && _inputBitRate >= 11 
+            else if (_inputBitRate <= 31000 && _inputBitRate >= 11000
                      || (_inputBitRate >= 11 && (_optimizerSettings.Quality == QualityEnum.Balanced)))
             {
                 _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality {20 - qualityOffset} -scenario 3 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
-            else if (_inputBitRate <= 11 && _inputBitRate >= 6)
+            else if (_inputBitRate <= 11000 && _inputBitRate >= 6000)
             {
                 _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality {21 - qualityOffset} -scenario 3 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
-            else if (_inputBitRate <= 6)
+            else if (_inputBitRate <= 6000)
             {
                 _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality {22 - qualityOffset} -scenario 3 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
