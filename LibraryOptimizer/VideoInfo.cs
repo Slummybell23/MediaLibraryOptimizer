@@ -402,9 +402,9 @@ public class VideoInfo
         
         var inputHevcFileSize = new FileInfo(inputHevcFile).Length/1000000;
         
-        if (inputHevcFileSize > 60000 && _optimizerSettings.Quality == QualityEnum.Balanced)
+        if (inputHevcFileSize > 50000 && _optimizerSettings.Quality == QualityEnum.Balanced)
         {
-            ConsoleLog.WriteLine($"Input HEVC file is larger than 60Gb, {inputHevcFileSize} mb. Retry 5 times to shrink.");
+            ConsoleLog.WriteLine($"Input HEVC file is larger than 50Gb, {inputHevcFileSize} mb. Retry 5 times to shrink.");
             var retryCount = 0;
             bool isOversize = true;
             bool isUndersize = false;
