@@ -204,7 +204,17 @@ public class LibraryOptimizer
 
                            if (EncodeAv1 || EncodeHevc)
                            {
-                               videoInfo.SetInputBitrate();
+                               try
+                               {
+                                   videoInfo.SetInputBitrate();
+                               }
+                               catch (Exception e)
+                               {
+                                   Console.WriteLine(e);
+                                   Console.WriteLine("Video may be corrupted.");
+                                   Console.WriteLine("Skipping...");
+                                   continue;
+                               }
                            }
 
                            if (EncodeAv1)
