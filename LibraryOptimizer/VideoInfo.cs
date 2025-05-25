@@ -243,17 +243,17 @@ public class VideoInfo
                 _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality 5 -scenario 3 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
             else if (_inputBitRate <= 31000 && _inputBitRate >= 11000
-                     || (_inputBitRate >= 11 && (_optimizerSettings.Quality == QualityEnum.Balanced)))
-            {
-                _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality {20 - qualityOffset} -scenario 3 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
-            }
-            else if (_inputBitRate <= 11000 && _inputBitRate >= 6000)
+                     || (_inputBitRate >= 11000 && (_optimizerSettings.Quality == QualityEnum.Balanced)))
             {
                 _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality {21 - qualityOffset} -scenario 3 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
-            else if (_inputBitRate <= 6000)
+            else if (_inputBitRate <= 11000 && _inputBitRate >= 6000)
             {
                 _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality {22 - qualityOffset} -scenario 3 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+            }
+            else if (_inputBitRate <= 6000)
+            {
+                _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality {23 - qualityOffset} -scenario 3 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
         }
     }
