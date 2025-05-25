@@ -513,7 +513,7 @@ public class VideoInfo
                 
                 if (isOversize)
                 {
-                    adjustment += 1;
+                    adjustment -= 1;
                     ConsoleLog.WriteLine($"Retry to shrink file... Adjustment: {adjustment}");
                     SetEncodeAv1Command(adjustment);
                 }
