@@ -201,7 +201,12 @@ public class VideoInfo
     public void SetVideoInfoCommandsWithAv1()
     {
         SetVideoInfoCommands();
-        
+
+        SetEncodeAv1Command();
+    }
+
+    private void SetEncodeAv1Command(int offset = 0)
+    {
         if (_optimizerSettings.IsNvidia)
         {
             //NVIDIA NVENC
@@ -220,7 +225,7 @@ public class VideoInfo
         }
         else
         {
-            var qualityOffset = 0;
+            var qualityOffset = 0 + offset;
             if (_optimizerSettings.Quality == QualityEnum.HighQuality)
                 qualityOffset = 2;
             
@@ -402,7 +407,7 @@ public class VideoInfo
         
         var inputHevcFileSize = new FileInfo(inputHevcFile).Length/1000000;
         
-        if (inputHevcFileSize > 50000 && _optimizerSettings.Quality == QualityEnum.Balanced)
+        if (inputHevcFileSize > 40000 && _optimizerSettings.Quality == QualityEnum.Balanced)
         {
             ConsoleLog.WriteLine($"Input HEVC file is larger than 50Gb, {inputHevcFileSize} mb. Retry 5 times to shrink.");
             var retryCount = 0;
@@ -470,6 +475,70 @@ public class VideoInfo
         }
     }
 
+    private void RetryEncodeAv1()
+    {
+        ConsoleLog.WriteLine($"Encoding AV1: {_encodeAv1Command}");
+        
+        var inputAv1FileSize = new FileInfo(_inputFilePath).Length/1000000;
+        
+        if (_optimizerSettings.Quality == QualityEnum.Balanced)
+        {
+            var retryCount = 0;
+            bool isOversize = true;
+            var adjustment = 0;
+            do
+            {
+                ConverterBackend.DeleteFile(_commandOutputFile);
+                
+                ConsoleLog.WriteLine($"Re Encoding {VideoName} To AV1: {_encodeAv1Command}");
+
+                long outputAv1FileSize;
+                var failedOutput = string.Empty;
+                try
+                {
+                    failedOutput = ConverterBackend.RunCommand(_encodeAv1Command, _inputFilePath, false, true);
+                    outputAv1FileSize = new FileInfo(_commandOutputFile).Length/1000000;
+                }
+                catch (Exception ex)
+                {
+                    if (ex is OperationCanceledException)
+                        throw;
+                
+                    ConsoleLog.WriteLine(failedOutput);
+                    throw;
+                }
+
+                ConsoleLog.WriteLine($"Output AV1 file is {outputAv1FileSize} mb");
+                isOversize = outputAv1FileSize > inputAv1FileSize * 0.80;
+                
+                if (isOversize)
+                {
+                    adjustment += 1;
+                    ConsoleLog.WriteLine($"Retry to shrink file... Adjustment: {adjustment}");
+                    SetEncodeAv1Command(adjustment);
+                }
+
+                retryCount++;
+            } while (isOversize && retryCount < 8);
+        }
+        else
+        {
+            var failedOutput = string.Empty;
+            try
+            {
+                failedOutput = ConverterBackend.RunCommand(_encodeAv1Command, _inputFilePath, false, true);
+            }
+            catch(Exception ex)
+            {
+                if (ex is OperationCanceledException)
+                    throw;
+                
+                ConsoleLog.WriteLine(failedOutput);
+                throw;
+            }
+        }
+    }
+    
     public ConverterStatusEnum EncodeAv1()
     {
         //Runs command sequence
@@ -477,7 +546,7 @@ public class VideoInfo
         {
             ConsoleLog.WriteLine($"Re Encoding {VideoName} To AV1: {_encodeAv1Command}");
 
-            var failedOutput = string.Empty;
+            /*var failedOutput = string.Empty;
             try
             {
                 failedOutput = ConverterBackend.RunCommand(_encodeAv1Command, _inputFilePath, false, true);
@@ -490,7 +559,9 @@ public class VideoInfo
                 
                 ConsoleLog.WriteLine(failedOutput);
                 throw;
-            }
+            }*/
+
+            RetryEncodeAv1();
             
             SetFileSizes();
             
