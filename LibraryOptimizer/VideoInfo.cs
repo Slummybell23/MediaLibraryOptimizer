@@ -136,7 +136,7 @@ public class VideoInfo
         _commandTempDirectory = ConverterBackend.FileFormatToCommand(_tempDirectory);
         
         _commandOutputFile = Path.Combine(_commandTempDirectory, "converted_" + Path.GetFileName(_commandInputFilePath));
-        _outputFile = ConverterBackend.FileRemoveFormat(_commandOutputFile);
+        _outputFile = Path.Combine(_tempDirectory, "converted_" + Path.GetFileName(_inputFilePath)); //ConverterBackend.FileRemoveFormat(_commandOutputFile);
         
         var command = $"ffmpeg -i '{_commandInputFilePath}' -hide_banner -loglevel info";
         InputFfmpegVideoInfo = ConverterBackend.RunCommand(command, _commandInputFilePath, false);
