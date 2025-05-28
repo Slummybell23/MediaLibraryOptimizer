@@ -251,9 +251,17 @@ public class VideoInfo
             {
                 _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality {22 - qualityOffset} -scenario 3 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
-            else if (_inputBitRate <= 6000)
+            else if (_inputBitRate <= 6000 && _inputBitRate >= 3000)
             {
                 _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality {23 - qualityOffset} -scenario 3 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+            }
+            else if (_inputBitRate <= 3000 && _inputBitRate >= 1500)
+            {
+                _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality {25 - qualityOffset} -scenario 3 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
+            }
+            else if (_inputBitRate <= 1500)
+            {
+                _encodeAv1Command = $"ffmpeg -hwaccel qsv -i '{_commandInputFilePath}' -map 0:v:0 -map 0:a? -map 0:s? -c:v av1_qsv -global_quality {28 - qualityOffset} -scenario 3 -preset 1 -c:a copy -c:s copy -analyzeduration 1000000 -map_metadata 0 -map_chapters 0 '{_commandOutputFile}'";
             }
         }
     }
