@@ -16,7 +16,7 @@ public abstract class Program
         {
             //File paths specified to my Windows machine for debugging.
             wrapper.CheckAll = "y";
-            wrapper.Libraries = new List<string>() { "Z:\\Plex\\Movie" };
+            wrapper.Libraries = new List<string>() { "Z:\\Plex\\Movie",  "Z:\\Plex\\TV show"};
             wrapper.RemuxDolbyVision = true;
             wrapper.EncodeHevc = true;
             wrapper.EncodeAv1 = true;
