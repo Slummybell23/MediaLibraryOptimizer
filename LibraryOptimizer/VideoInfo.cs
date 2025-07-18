@@ -180,7 +180,7 @@ public class VideoInfo
             _reEncodeHevcProfile8Command = $"ffmpeg -i '{_profile8HevcFile}' -c:v hevc_nvenc -preset p7 -cq {3 + adjustedQuality} -c:a copy '{_encodedHevc}'";
         else
             //INTEL ARC Hopefully encodes well now
-            _reEncodeHevcProfile8Command = $"ffmpeg -hwaccel qsv -i '{_profile8HevcFile}' -c:v hevc_qsv -preset 1 -global_quality {6 + adjustedQuality} -scenario 3 -c:a copy '{_encodedHevc}'";
+            _reEncodeHevcProfile8Command = $"ffmpeg -hwaccel qsv -i '{_profile8HevcFile}' -c:v hevc_qsv -preset 1 -global_quality {2 + adjustedQuality} -scenario 3 -c:a copy '{_encodedHevc}'";
     }
 
     private void SetVideoInfoPaths()
